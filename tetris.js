@@ -42,17 +42,17 @@ function main() {
                     rotation: mat4.create(), // Identity matrix
                     scale: vec3.fromValues(0.5, 0.5, 0.5),
                 },
-                programInfo: badNormalShader(gl),
+                programInfo: goodNormalShader(gl),
                 buffers: null,
                 texture: null,
-            },
+            },/*
             {
                 model: {
                     position: vec3.fromValues(1.5, 0.0, 1.5),
                     rotation: mat4.create(), // Identity matrix
                     scale: vec3.fromValues(0.5, 0.5, 0.5),
                 },
-                programInfo: badNormalShader(gl),
+                programInfo: goodNormalShader(gl),
                 buffers: null,
                 texture: null,
             },
@@ -62,14 +62,14 @@ function main() {
                     rotation: mat4.create(), // Identity matrix
                     scale: vec3.fromValues(0.5, 0.5, 0.5),
                 },
-                programInfo: badNormalShader(gl),
+                programInfo: goodNormalShader(gl),
                 buffers: null,
                 texture: null,
-            },
+            },*/
         ],
-        usingGoodShader: false,
-        goodShader: goodNormalShader(gl),
-        badShader: badNormalShader(gl),
+        //usingGoodShader: false,
+        //goodShader: goodNormalShader(gl),
+        //badShader: badNormalShader(gl),
         canvas: canvas,
         selectedIndex: 0,
     };
@@ -115,7 +115,8 @@ function startRendering(gl, state) {
 function updateState(deltaTime, state) {
     // Update state as you wish here.  Gets called every frame.
     state.objects.forEach((object) => {
-        mat4.rotate(object.model.rotation, object.model.rotation, deltaTime * 0.5, vec3.fromValues(1.0, 1.0, 1.0));
+        mat4.rotate(object.model.rotation, object.model.rotation, deltaTime * 2, vec3.fromValues(1.0, 1.0, 1.0));   
+        vec3.add(object.model.position, object.model.position, vec3.fromValues(0, -0.1, 0));
     });
 }
 
@@ -211,10 +212,7 @@ function setupKeypresses(state){
 
         switch(event.code) {
         case "KeyA":
-            state.usingGoodShader = !state.usingGoodShader;
-            state.objects.forEach((object) => {
-                object.programInfo = (state.usingGoodShader) ? state.goodShader : state.badShader;
-            });
+            console.log("YO");
             break;
         default:
             break;
@@ -225,79 +223,6 @@ function setupKeypresses(state){
 /************************************
  * SHADER SETUP
  ************************************/
-
-function badNormalShader(gl){
-
-    // Vertex shader source code
-    const vsSource =
-    `#version 300 es
-    in vec3 aPosition;
-    in vec3 aNormal;
-
-    uniform mat4 uProjectionMatrix;
-    uniform mat4 uViewMatrix;
-    uniform mat4 uModelMatrix;
-
-    uniform vec3 uCameraPosition;
-
-    out vec3 oNormal;
-
-    void main() {
-        // Position needs to be a vec4 with w as 1.0
-        gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1.0);
-
-        oNormal = normalize((uModelMatrix * vec4(aNormal, 1.0)).xyz); // Buggy. When w == 1.0, the normal is incorrectly treated like a point
-
-    }
-    `;
-
-    // Fragment shader source code
-    const fsSource =
-    `#version 300 es
-    precision highp float;
-
-    out vec4 fragColor;
-
-    in vec3 oNormal;
-
-    void main() {
-        fragColor = vec4(abs(oNormal), 1.0);
-    }
-    `;
-
-
-    // Create our shader program with our custom function
-    const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
-
-    // Collect all the info needed to use the shader program.
-    const programInfo = {
-        // The actual shader program
-        program: shaderProgram,
-        // The attribute locations. WebGL will use there to hook up the buffers to the shader program.
-        // NOTE: it may be wise to check if these calls fail by seeing that the returned location is not -1.
-        attribLocations: {
-            vertexPosition: gl.getAttribLocation(shaderProgram, 'aPosition'),
-            vertexNormal: gl.getAttribLocation(shaderProgram, 'aNormal'),
-        },
-        uniformLocations: {
-            projection: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-            view: gl.getUniformLocation(shaderProgram, 'uViewMatrix'),
-            model: gl.getUniformLocation(shaderProgram, 'uModelMatrix'),
-        },
-    };
-
-       // Check to see if we found the locations of our uniforms and attributes
-    // Typos are a common source of failure
-    if (programInfo.attribLocations.vertexPosition === -1 ||
-        programInfo.attribLocations.vertexNormal === -1 ||
-        programInfo.uniformLocations.projection === -1 ||
-        programInfo.uniformLocations.view === -1 ||
-        programInfo.uniformLocations.model === -1 ) {
-        printError('Shader Location Error', 'One or more of the uniform and attribute variables in the shaders could not be located');
-    }
-
-    return programInfo;
-}
 
 function goodNormalShader(gl){
 

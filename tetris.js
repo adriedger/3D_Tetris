@@ -24,8 +24,8 @@ function main() {
     // Create a state for our scene
     var state = {
         camera: {
-            position: vec3.fromValues(0.0, 3.0, 5.0),
-            center: vec3.fromValues(0.0, 0.0, 0.0),
+            position: vec3.fromValues(5.0, 10.0, 20.0),
+            center: vec3.fromValues(5.0, 10.0, 0.0),
             up: vec3.fromValues(0.0, 1.0, 0.0),
         },
         lights: [
@@ -38,46 +38,52 @@ function main() {
         objects: [
             {
                 model: {
-                    position: vec3.fromValues(0, 0.0, 0.0),
+                    position: vec3.fromValues(0.0, 0.0, 0.0),
                     rotation: mat4.create(), // Identity matrix
                     scale: vec3.fromValues(0.5, 0.5, 0.5),
                 },
-                programInfo: badNormalShader(gl),
+                programInfo: goodNormalShader(gl),
                 buffers: null,
                 texture: null,
-            },
-            {
+				isCurr: false, // is it in the moving piece?
+            }, 
+			{
                 model: {
-                    position: vec3.fromValues(1.5, 0.0, 1.5),
+                    position: vec3.fromValues(9.0, 19.0, 0.0),
                     rotation: mat4.create(), // Identity matrix
                     scale: vec3.fromValues(0.5, 0.5, 0.5),
                 },
-                programInfo: badNormalShader(gl),
+                programInfo: goodNormalShader(gl),
                 buffers: null,
                 texture: null,
-            },
-            {
-                model: {
-                    position: vec3.fromValues(-1.5, 0.0, -1.5),
-                    rotation: mat4.create(), // Identity matrix
-                    scale: vec3.fromValues(0.5, 0.5, 0.5),
-                },
-                programInfo: badNormalShader(gl),
-                buffers: null,
-                texture: null,
-            },
+				isCurr: false, // is it in the moving piece?
+            }, 
         ],
-        usingGoodShader: false,
-        goodShader: goodNormalShader(gl),
-        badShader: badNormalShader(gl),
+        //usingGoodShader: false,
+        //goodShader: goodNormalShader(gl),
+        //badShader: badNormalShader(gl),
         canvas: canvas,
-        selectedIndex: 0,
+        //selectedIndex: 0,
+		
+		currPiece: null, //the tetris piece that is currently moving
+		
+		currPieceTransform: { //the transformation of the tetris piece that is currently moving
+			//position: vec3.fromValues(5.0, 20.0, 0.0),
+			position: vec3.fromValues(0.0, 0.0, 0.0),
+			rotation: mat4.create(), // Identity matrix
+			scale: vec3.fromValues(1.0, 1.0, 1.0),
+		},
+		
+		//pieces = null,
     };
 
     state.objects.forEach((object) => {
         initCubeBuffers(gl, object);
     });
 
+	var allPieces = initializeTetrisPeices(gl);
+	addPiece(gl, allPieces, state);
+	
     setupKeypresses(state);
 
     console.log("Starting rendering loop");
@@ -114,8 +120,11 @@ function startRendering(gl, state) {
 
 function updateState(deltaTime, state) {
     // Update state as you wish here.  Gets called every frame.
+	var currPiece = state.currPiece;
     state.objects.forEach((object) => {
-        mat4.rotate(object.model.rotation, object.model.rotation, deltaTime * 0.5, vec3.fromValues(1.0, 1.0, 1.0));
+        //mat4.rotate(object.model.rotation, object.model.rotation, deltaTime * 2, vec3.fromValues(1.0, 1.0, 1.0));   
+        //vec3.add(object.model.position, object.model.position, vec3.fromValues(0, -0.1, 0));
+		vec3.add(state.currPieceTransform.position, state.currPieceTransform.position, vec3.fromValues(0, -0.02, 0));
     });
 }
 
@@ -164,12 +173,21 @@ function drawScene(gl, state) {
             gl.uniformMatrix4fv(object.programInfo.uniformLocations.view, false, viewMatrix);
 
 
-            // Update model transform
+            // Update model transform -> scale, rotate, then translate
 
             var modelMatrix = mat4.create();
+			mat4.scale(modelMatrix, modelMatrix, object.model.scale);
+			mat4.mul(modelMatrix, modelMatrix, object.model.rotation);
             mat4.translate(modelMatrix, modelMatrix, object.model.position);
-            mat4.mul(modelMatrix, modelMatrix, object.model.rotation);
-            mat4.scale(modelMatrix, modelMatrix, object.model.scale);
+            
+            
+			
+			if (object.isCurr == true) { //Apply tetris piece transformation
+				mat4.translate(modelMatrix, modelMatrix, state.currPieceTransform.position);
+				mat4.mul(modelMatrix, modelMatrix, state.currPieceTransform.rotation);
+				mat4.scale(modelMatrix, modelMatrix, state.currPieceTransform.scale);
+			}
+			
             gl.uniformMatrix4fv(object.programInfo.uniformLocations.model, false, modelMatrix);
         
             // Update camera position
@@ -181,8 +199,12 @@ function drawScene(gl, state) {
             gl.uniform1f(object.programInfo.uniformLocations.light0Strength, state.lights[0].strength);
         }
 
-        // Draw 
-        {
+    //});
+	
+	//state.objects.forEach((object) => {
+		{
+		// Draw 
+        
             // Bind the buffer we want to draw
             gl.bindVertexArray(object.buffers.vao);
 
@@ -194,8 +216,8 @@ function drawScene(gl, state) {
             const offset = 0; // Number of elements to skip before starting
             gl.drawElements(gl.TRIANGLES, object.buffers.numVertices, gl.UNSIGNED_SHORT, offset);
         }
-
-    });
+	});
+	
 }
 
 
@@ -211,10 +233,7 @@ function setupKeypresses(state){
 
         switch(event.code) {
         case "KeyA":
-            state.usingGoodShader = !state.usingGoodShader;
-            state.objects.forEach((object) => {
-                object.programInfo = (state.usingGoodShader) ? state.goodShader : state.badShader;
-            });
+            console.log("YO");
             break;
         default:
             break;
@@ -225,79 +244,6 @@ function setupKeypresses(state){
 /************************************
  * SHADER SETUP
  ************************************/
-
-function badNormalShader(gl){
-
-    // Vertex shader source code
-    const vsSource =
-    `#version 300 es
-    in vec3 aPosition;
-    in vec3 aNormal;
-
-    uniform mat4 uProjectionMatrix;
-    uniform mat4 uViewMatrix;
-    uniform mat4 uModelMatrix;
-
-    uniform vec3 uCameraPosition;
-
-    out vec3 oNormal;
-
-    void main() {
-        // Position needs to be a vec4 with w as 1.0
-        gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1.0);
-
-        oNormal = normalize((uModelMatrix * vec4(aNormal, 1.0)).xyz); // Buggy. When w == 1.0, the normal is incorrectly treated like a point
-
-    }
-    `;
-
-    // Fragment shader source code
-    const fsSource =
-    `#version 300 es
-    precision highp float;
-
-    out vec4 fragColor;
-
-    in vec3 oNormal;
-
-    void main() {
-        fragColor = vec4(abs(oNormal), 1.0);
-    }
-    `;
-
-
-    // Create our shader program with our custom function
-    const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
-
-    // Collect all the info needed to use the shader program.
-    const programInfo = {
-        // The actual shader program
-        program: shaderProgram,
-        // The attribute locations. WebGL will use there to hook up the buffers to the shader program.
-        // NOTE: it may be wise to check if these calls fail by seeing that the returned location is not -1.
-        attribLocations: {
-            vertexPosition: gl.getAttribLocation(shaderProgram, 'aPosition'),
-            vertexNormal: gl.getAttribLocation(shaderProgram, 'aNormal'),
-        },
-        uniformLocations: {
-            projection: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-            view: gl.getUniformLocation(shaderProgram, 'uViewMatrix'),
-            model: gl.getUniformLocation(shaderProgram, 'uModelMatrix'),
-        },
-    };
-
-       // Check to see if we found the locations of our uniforms and attributes
-    // Typos are a common source of failure
-    if (programInfo.attribLocations.vertexPosition === -1 ||
-        programInfo.attribLocations.vertexNormal === -1 ||
-        programInfo.uniformLocations.projection === -1 ||
-        programInfo.uniformLocations.view === -1 ||
-        programInfo.uniformLocations.model === -1 ) {
-        printError('Shader Location Error', 'One or more of the uniform and attribute variables in the shaders could not be located');
-    }
-
-    return programInfo;
-}
 
 function goodNormalShader(gl){
 
@@ -370,6 +316,139 @@ function goodNormalShader(gl){
     }
 
     return programInfo;
+}
+/************************************
+ * TETRIS FUNCTIONS
+ ************************************/
+ 
+// Creates a big list of all possible playable tetris pieces
+function initializeTetrisPeices(gl) {
+	var allPieces = [
+		{
+			objects: [
+			{
+				model: {
+					position: vec3.fromValues(-1.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+				isCurr: false,
+			},
+			{
+				model: {
+					position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+				isCurr: false,
+			},
+			{
+				model: {
+					position: vec3.fromValues(-1.0, -1.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+				isCurr: false,
+			},
+			{
+				model: {
+					position: vec3.fromValues(0.0, -1.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+				isCurr: false,
+			},
+			],
+		},
+		 //end piece 1
+		{
+			objects: [
+			{
+				model: {
+					position: vec3.fromValues(0.0, 1.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+				isCurr: false,
+			},
+			{
+				model: {
+					position: vec3.fromValues(1.0, 1.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+				isCurr: false,
+			},
+			{
+				model: {
+					position: vec3.fromValues(1.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+				isCurr: false,
+			},
+			{
+				model: {
+					position: vec3.fromValues(1.0, -1.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+				isCurr: false,
+			},
+			],
+		},
+	];
+	//};
+	return allPieces;
+}
+
+//adds a tetris piece to the screen 
+function addPiece(gl, allPieces, state) {
+	var rand = 1; //random number % num_shapes
+	console.log("allPieces");
+	console.log(allPieces);
+	var piece = allPieces[rand];
+	console.log(piece);
+	
+	state.currPiece = piece;
+	
+	state.currPieceTransform.position = vec3.fromValues(5.0, 20.0, 0.0),
+	state.currPieceTransform.rotation = mat4.create(); // Identity matrix
+	state.currPieceTransform.scale = vec3.fromValues(1.0, 1.0, 1.0);
+	
+	//add objects in tetris piece to scene
+	piece.objects.forEach((object) => {
+		console.log(object);
+		object.isCurr = true;
+		state.objects.push(object);
+        initCubeBuffers(gl, object);
+		//state.objects.push(object);
+    });
+	return;
 }
 
 /************************************

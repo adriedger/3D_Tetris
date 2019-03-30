@@ -84,7 +84,7 @@ function main() {
 	var allPieces = initializeTetrisPeices(gl);
 	addPiece(gl, allPieces, state);
 	
-    setupKeypresses(state);
+    setupKeypresses(state, allPieces, gl);
 
     console.log("Starting rendering loop");
     startRendering(gl, state);
@@ -228,7 +228,7 @@ function drawScene(gl, state) {
  * UI EVENTS
  ************************************/
 
-function setupKeypresses(state){
+function setupKeypresses(state, allPieces, gl){
     document.addEventListener("keydown", (event) => {
         console.log(event.code);
 
@@ -237,7 +237,21 @@ function setupKeypresses(state){
         switch(event.code) {
         case "KeyA":
             console.log("YO");
+			//addPiece(gl, allPieces, state);
             break;
+		case "ArrowLeft": //move left
+			vec3.add(state.currPieceTransform.position, state.currPieceTransform.position, vec3.fromValues(-1.0, 0.0, 0));
+			break;
+		case "ArrowRight": //move right
+			vec3.add(state.currPieceTransform.position, state.currPieceTransform.position, vec3.fromValues(1.0, 0.0, 0));		
+			break;
+		case "ArrowUp": //rotate positive (left)
+			mat4.rotateZ(state.currPieceTransform.rotation, state.currPieceTransform.rotation, 1.5708);//1.5708 rad = 90 deg
+			break;
+		case "ArrowDown": //rotate negative (right)
+			mat4.rotateZ(state.currPieceTransform.rotation, state.currPieceTransform.rotation, -1.5708);//1.5708 rad = 90 deg
+			break;
+		
         default:
             break;
         }
@@ -432,20 +446,27 @@ function initializeTetrisPeices(gl) {
 //adds a tetris piece to the screen 
 function addPiece(gl, allPieces, state) {
 	var rand = 1; //random number % num_shapes
-	console.log("allPieces");
-	console.log(allPieces);
+	//console.log("allPieces");
+	//console.log(allPieces);
 	var piece = allPieces[rand];
-	console.log(piece);
+	//console.log(piece);
+	
+	//makes sure that when you add a piece, the old piece stops moving
+	if(state.currPiece != null) {  
+		state.currPiece.objects.forEach((object) => {
+			object.isCurr = false;
+		});
+	}
 	
 	state.currPiece = piece;
 	
-	state.currPieceTransform.position = vec3.fromValues(4.0, 19.0, 0.0), // 4 & 19 x 2 (scale issue)
+	state.currPieceTransform.position = vec3.fromValues(4.0, 19.0, 0.0);
 	state.currPieceTransform.rotation = mat4.create(); // Identity matrix
 	state.currPieceTransform.scale = vec3.fromValues(1.0, 1.0, 1.0);
 	
 	//add objects in tetris piece to scene
 	piece.objects.forEach((object) => {
-		console.log(object);
+		//console.log(object);
 		object.isCurr = true;
 		state.objects.push(object);
         initCubeBuffers(gl, object);

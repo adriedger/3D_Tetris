@@ -174,19 +174,22 @@ function drawScene(gl, state) {
 
 
             // Update model transform -> scale, rotate, then translate
-
-            var modelMatrix = mat4.create();
-			mat4.scale(modelMatrix, modelMatrix, object.model.scale);
-			mat4.mul(modelMatrix, modelMatrix, object.model.rotation);
-            mat4.translate(modelMatrix, modelMatrix, object.model.position);
-            
-            
+			
+			var modelMatrix = mat4.create();
 			
 			if (object.isCurr == true) { //Apply tetris piece transformation
 				mat4.translate(modelMatrix, modelMatrix, state.currPieceTransform.position);
 				mat4.mul(modelMatrix, modelMatrix, state.currPieceTransform.rotation);
 				mat4.scale(modelMatrix, modelMatrix, state.currPieceTransform.scale);
 			}
+			
+            
+			mat4.translate(modelMatrix, modelMatrix, object.model.position);
+			mat4.mul(modelMatrix, modelMatrix, object.model.rotation);
+            mat4.scale(modelMatrix, modelMatrix, object.model.scale);
+            
+			
+			
 			
             gl.uniformMatrix4fv(object.programInfo.uniformLocations.model, false, modelMatrix);
         
@@ -377,6 +380,17 @@ function initializeTetrisPeices(gl) {
 			objects: [
 			{
 				model: {
+					position: vec3.fromValues(-1.0, 1.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+				isCurr: false,
+			},
+			{
+				model: {
 					position: vec3.fromValues(0.0, 1.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
@@ -388,7 +402,7 @@ function initializeTetrisPeices(gl) {
 			},
 			{
 				model: {
-					position: vec3.fromValues(1.0, 1.0, 0.0),
+					position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
 				},
@@ -399,18 +413,7 @@ function initializeTetrisPeices(gl) {
 			},
 			{
 				model: {
-					position: vec3.fromValues(1.0, 0.0, 0.0),
-					rotation: mat4.create(), // Identity matrix
-					scale: vec3.fromValues(0.5, 0.5, 0.5),
-				},
-				programInfo: goodNormalShader(gl),
-				buffers: null,
-				texture: null,
-				isCurr: false,
-			},
-			{
-				model: {
-					position: vec3.fromValues(1.0, -1.0, 0.0),
+					position: vec3.fromValues(0.0, -1.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
 				},
@@ -436,7 +439,7 @@ function addPiece(gl, allPieces, state) {
 	
 	state.currPiece = piece;
 	
-	state.currPieceTransform.position = vec3.fromValues(5.0, 20.0, 0.0),
+	state.currPieceTransform.position = vec3.fromValues(4.0, 19.0, 0.0), // 4 & 19 x 2 (scale issue)
 	state.currPieceTransform.rotation = mat4.create(); // Identity matrix
 	state.currPieceTransform.scale = vec3.fromValues(1.0, 1.0, 1.0);
 	
@@ -446,7 +449,6 @@ function addPiece(gl, allPieces, state) {
 		object.isCurr = true;
 		state.objects.push(object);
         initCubeBuffers(gl, object);
-		//state.objects.push(object);
     });
 	return;
 }

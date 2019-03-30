@@ -81,10 +81,12 @@ function main() {
         initCubeBuffers(gl, object);
     });
 
-	var allPieces = initializeTetrisPeices(gl);
-	addPiece(gl, allPieces, state);
+	//var allPieces = initializeTetrisPeices(gl);
+	//addPiece(gl, allPieces, state);
 	
-    setupKeypresses(state, allPieces, gl);
+	addPiece(gl, state)
+	
+    setupKeypresses(state, gl);
 
     console.log("Starting rendering loop");
     startRendering(gl, state);
@@ -121,11 +123,11 @@ function startRendering(gl, state) {
 function updateState(deltaTime, state) {
     // Update state as you wish here.  Gets called every frame.
 	var currPiece = state.currPiece;
-    state.objects.forEach((object) => {
+    //state.objects.forEach((object) => {
         //mat4.rotate(object.model.rotation, object.model.rotation, deltaTime * 2, vec3.fromValues(1.0, 1.0, 1.0));   
         //vec3.add(object.model.position, object.model.position, vec3.fromValues(0, -0.1, 0));
-		vec3.add(state.currPieceTransform.position, state.currPieceTransform.position, vec3.fromValues(0, -0.02, 0));
-    });
+	vec3.add(state.currPieceTransform.position, state.currPieceTransform.position, vec3.fromValues(0, -0.02, 0));
+    //});
 }
 
 function drawScene(gl, state) {
@@ -228,7 +230,7 @@ function drawScene(gl, state) {
  * UI EVENTS
  ************************************/
 
-function setupKeypresses(state, allPieces, gl){
+function setupKeypresses(state, gl){
     document.addEventListener("keydown", (event) => {
         console.log(event.code);
 
@@ -237,7 +239,7 @@ function setupKeypresses(state, allPieces, gl){
         switch(event.code) {
         case "KeyA":
             console.log("YO");
-			//addPiece(gl, allPieces, state);
+			addPiece(gl, state);
             break;
 		case "ArrowLeft": //move left
 			vec3.add(state.currPieceTransform.position, state.currPieceTransform.position, vec3.fromValues(-1.0, 0.0, 0));
@@ -338,10 +340,14 @@ function goodNormalShader(gl){
  * TETRIS FUNCTIONS
  ************************************/
  
-// Creates a big list of all possible playable tetris pieces
-function initializeTetrisPeices(gl) {
-	var allPieces = [
-		{
+
+function generateTetrisPeice(gl) {
+	var piece;
+	var rand = 1;	//random number % num_shapes
+	
+	switch(rand) {
+		case 0:
+			piece = {
 			objects: [
 			{
 				model: {
@@ -387,10 +393,13 @@ function initializeTetrisPeices(gl) {
 				texture: null,
 				isCurr: false,
 			},
-			],
-		},
-		 //end piece 1
-		{
+			],};
+			break;
+			//end piece 1
+	
+	
+		case 1:
+			piece = {
 			objects: [
 			{
 				model: {
@@ -435,26 +444,30 @@ function initializeTetrisPeices(gl) {
 				buffers: null,
 				texture: null,
 				isCurr: false,
-			},
-			],
-		},
-	];
-	//};
-	return allPieces;
+			},],
+			};
+			break;
+	//];
+	};
+	return piece;
 }
 
 //adds a tetris piece to the screen 
-function addPiece(gl, allPieces, state) {
-	var rand = 1; //random number % num_shapes
-	//console.log("allPieces");
-	//console.log(allPieces);
-	var piece = allPieces[rand];
+function addPiece(gl, state) {
+
+
+	var piece = generateTetrisPeice(gl);
 	//console.log(piece);
 	
 	//makes sure that when you add a piece, the old piece stops moving
 	if(state.currPiece != null) {  
 		state.currPiece.objects.forEach((object) => {
 			object.isCurr = false;
+			console.log("state.currPieceTransform.rotation");
+			console.log(state.currPieceTransform.rotation);
+			
+			//mat4.mul(object.model.rotation, object.model.rotation, mat4.clone(state.currPieceTransform.rotation));
+			vec3.add(object.model.position, object.model.position, vec3.clone(state.currPieceTransform.position)); //add piece transforms (no longer changing)
 		});
 	}
 	
@@ -473,6 +486,21 @@ function addPiece(gl, allPieces, state) {
     });
 	return;
 }
+
+//deep copies an object (convert to json and back)
+/* function jsonCopy(src) {
+	console.log(src);
+	//var target = JSON.parse(JSON.stringify(src));
+	var target = jQuery.extend(true, {}, src);
+	src.objects[0].isCurr = false;
+	target.objects[0].isCurr = true;
+	
+	console.log("src");
+	console.log(src.objects[0]);
+	console.log("target");
+	console.log(target.objects[0]);
+	return target;
+} */
 
 /************************************
  * BUFFER SETUP

@@ -347,19 +347,11 @@ function addPiece(gl, state) {
 	
 	var piece = generateTetrisPeice(gl);
 	
-	//makes sure that when you add a piece, the old piece stops moving
-	/* if(state.currPiece != null) {  
-		state.currPiece.objects.forEach((object) => {
-			object.isCurr = false;
-		});
-	} */
-	
 	state.currPiece = piece;
 	
 	//add objects in tetris piece to scene
 	piece.objects.forEach((object) => {
 		//console.log(object);
-		//object.isCurr = true;
 	
 		//add transformations (the tetris piece rotates and translates)
 		object.model.piece_position = vec3.fromValues(4.0, 19.0, 0.0);
@@ -374,10 +366,10 @@ function addPiece(gl, state) {
 
 function generateTetrisPeice(gl) {
 	var piece;
-	var rand = 1;	//random number % num_shapes
+	var rand = 4;	//random number % num_shapes
 	
 	switch(rand) {
-		case 0:
+		case 0: //square piece
 			piece = {
 			objects: [
 			{
@@ -426,10 +418,10 @@ function generateTetrisPeice(gl) {
 			},
 			],};
 			break;
-			//end piece 1
+			//end
 	
 	
-		case 1:
+		case 1: // forwards L piece
 			piece = {
 			objects: [
 			{
@@ -478,6 +470,159 @@ function generateTetrisPeice(gl) {
 			},],
 			};
 			break;
+			
+		case 2:  // Backwards L Piece
+			piece = {
+			objects: [
+			{
+				model: {
+					cube_position: vec3.fromValues(1.0, 1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, -1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			],};
+			break;
+			//end
+			
+		case 3: // T piece
+			piece = {
+			objects: [
+			{
+				model: {
+					cube_position: vec3.fromValues(-1.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(1.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			],};
+			break;
+			//end
+			
+		case 4: // straight row piece
+			piece = {
+			objects: [
+			{
+				model: {
+					cube_position: vec3.fromValues(-1.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(1.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(-2.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			],};
+			break;
+			//end
 	};
 	return piece;
 }

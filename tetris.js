@@ -124,24 +124,20 @@ function updateState(deltaTime, state, gl) {
     // Update state as you wish here.  Gets called every frame.
 	
     state.currPiece.objects.forEach((object) => {
-		console.log(object.model.cube_position[1])
-		if (object.model.piece_position[1] > 0) {
-			vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.04, 0));
-		}
-		else {
-			addPiece(gl, state);
-		}
+		console.log(object.model.cube_position[1]);
+		collisionCheck(object.model, gl, state);
+		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.04, 0));
     });
 }
 
 //model is object.model
 function collisionCheck(model, gl, state){
-	if(model.piece_position[1] > 10){
-		break;
+	if(model.piece_position[1] < 1){
+		addPiece(gl, state);
 	}
-	else{
-		addPiece(gl, state)
-	}
+}
+
+function sidesCheck(model){
 }
 
 function drawScene(gl, state) {
@@ -249,12 +245,16 @@ function setupKeypresses(state, gl){
 			
 		case "ArrowLeft": //move left
 			state.currPiece.objects.forEach((object) => {
-				vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
+				if (object.model.piece_position[0] != 0) {
+					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
+				}
 			});
 			break;
 		case "ArrowRight": //move right
 			state.currPiece.objects.forEach((object) => {
-				vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(1.0, 0.0, 0));
+				if (object.model.piece_position[0] != 9) {
+					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(1.0, 0.0, 0));
+				}			
 			});
 			break;
 			

@@ -107,7 +107,7 @@ function startRendering(gl, state) {
         const deltaTime = now - then;
         then = now;
 
-        updateState(deltaTime, state);
+        updateState(deltaTime, state, gl);
 
         // Draw our scene
         drawScene(gl, state);
@@ -120,14 +120,28 @@ function startRendering(gl, state) {
     requestAnimationFrame(render);
 }
 
-function updateState(deltaTime, state) {
+function updateState(deltaTime, state, gl) {
     // Update state as you wish here.  Gets called every frame.
-	//var currPiece = state.currPiece;
+	
     state.currPiece.objects.forEach((object) => {
-        //mat4.rotate(object.model.rotation, object.model.rotation, deltaTime * 2, vec3.fromValues(1.0, 1.0, 1.0));   
-        //vec3.add(object.model.position, object.model.position, vec3.fromValues(0, -0.1, 0));
-		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.02, 0));
+		console.log(object.model.cube_position[1])
+		if (object.model.piece_position[1] > 0) {
+			vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.04, 0));
+		}
+		else {
+			addPiece(gl, state);
+		}
     });
+}
+
+//model is object.model
+function collisionCheck(model, gl, state){
+	if(model.piece_position[1] > 10){
+		break;
+	}
+	else{
+		addPiece(gl, state)
+	}
 }
 
 function drawScene(gl, state) {

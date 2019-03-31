@@ -24,8 +24,8 @@ function main() {
     // Create a state for our scene
     var state = {
         camera: {
-            position: vec3.fromValues(0.0, 3.0, 5.0),
-            center: vec3.fromValues(0.0, 0.0, 0.0),
+            position: vec3.fromValues(5.0, 10.0, 20.0),
+            center: vec3.fromValues(5.0, 10.0, 0.0),
             up: vec3.fromValues(0.0, 1.0, 0.0),
         },
         lights: [
@@ -38,47 +38,55 @@ function main() {
         objects: [
             {
                 model: {
-                    position: vec3.fromValues(0, 0.0, 0.0),
+                    cube_position: vec3.fromValues(0.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
                     rotation: mat4.create(), // Identity matrix
                     scale: vec3.fromValues(0.5, 0.5, 0.5),
                 },
                 programInfo: goodNormalShader(gl),
                 buffers: null,
                 texture: null,
-            },/*
-            {
+            }, 
+			{
                 model: {
-                    position: vec3.fromValues(1.5, 0.0, 1.5),
+                    cube_position: vec3.fromValues(9.0, 19.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
                     rotation: mat4.create(), // Identity matrix
                     scale: vec3.fromValues(0.5, 0.5, 0.5),
                 },
                 programInfo: goodNormalShader(gl),
                 buffers: null,
                 texture: null,
-            },
-            {
-                model: {
-                    position: vec3.fromValues(-1.5, 0.0, -1.5),
-                    rotation: mat4.create(), // Identity matrix
-                    scale: vec3.fromValues(0.5, 0.5, 0.5),
-                },
-                programInfo: goodNormalShader(gl),
-                buffers: null,
-                texture: null,
-            },*/
+            }, 
         ],
         //usingGoodShader: false,
         //goodShader: goodNormalShader(gl),
         //badShader: badNormalShader(gl),
         canvas: canvas,
-        selectedIndex: 0,
+        //selectedIndex: 0,
+		
+		currPiece: null, //the tetris piece that is currently moving
+		
+		/* currPieceTransform: { //the transformation of the tetris piece that is currently moving
+			//position: vec3.fromValues(5.0, 20.0, 0.0),
+			position: vec3.fromValues(0.0, 0.0, 0.0),
+			rotation: mat4.create(), // Identity matrix
+			scale: vec3.fromValues(1.0, 1.0, 1.0),
+		}, */
+		
+		//pieces = null,
     };
 
     state.objects.forEach((object) => {
         initCubeBuffers(gl, object);
     });
 
-    setupKeypresses(state);
+	//var allPieces = initializeTetrisPeices(gl);
+	//addPiece(gl, allPieces, state);
+	
+	addPiece(gl, state)
+	
+    setupKeypresses(state, gl);
 
     console.log("Starting rendering loop");
     startRendering(gl, state);
@@ -114,9 +122,11 @@ function startRendering(gl, state) {
 
 function updateState(deltaTime, state) {
     // Update state as you wish here.  Gets called every frame.
-    state.objects.forEach((object) => {
-        mat4.rotate(object.model.rotation, object.model.rotation, deltaTime * 2, vec3.fromValues(1.0, 1.0, 1.0));   
-        vec3.add(object.model.position, object.model.position, vec3.fromValues(0, -0.1, 0));
+	//var currPiece = state.currPiece;
+    state.currPiece.objects.forEach((object) => {
+        //mat4.rotate(object.model.rotation, object.model.rotation, deltaTime * 2, vec3.fromValues(1.0, 1.0, 1.0));   
+        //vec3.add(object.model.position, object.model.position, vec3.fromValues(0, -0.1, 0));
+		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.02, 0));
     });
 }
 
@@ -165,12 +175,18 @@ function drawScene(gl, state) {
             gl.uniformMatrix4fv(object.programInfo.uniformLocations.view, false, viewMatrix);
 
 
-            // Update model transform
-
-            var modelMatrix = mat4.create();
-            mat4.translate(modelMatrix, modelMatrix, object.model.position);
+            // Update model transform -> ( Tpiece . Rotation . ( Tcube . Scale (x)))
+			// no per-cube rotation and no piece scale -> order of transformations that we want
+			var modelMatrix = mat4.create();
+			
+			//( Tpiece . Rotation . ( ... ))
+			mat4.translate(modelMatrix, modelMatrix, object.model.piece_position);
             mat4.mul(modelMatrix, modelMatrix, object.model.rotation);
+			
+			// ( Tcube . Scale (x))
+			mat4.translate(modelMatrix, modelMatrix, object.model.cube_position);
             mat4.scale(modelMatrix, modelMatrix, object.model.scale);
+			
             gl.uniformMatrix4fv(object.programInfo.uniformLocations.model, false, modelMatrix);
         
             // Update camera position
@@ -182,8 +198,9 @@ function drawScene(gl, state) {
             gl.uniform1f(object.programInfo.uniformLocations.light0Strength, state.lights[0].strength);
         }
 
-        // Draw 
-        {
+		{
+		// Draw 
+        
             // Bind the buffer we want to draw
             gl.bindVertexArray(object.buffers.vao);
 
@@ -195,8 +212,8 @@ function drawScene(gl, state) {
             const offset = 0; // Number of elements to skip before starting
             gl.drawElements(gl.TRIANGLES, object.buffers.numVertices, gl.UNSIGNED_SHORT, offset);
         }
-
-    });
+	});
+	
 }
 
 
@@ -204,16 +221,41 @@ function drawScene(gl, state) {
  * UI EVENTS
  ************************************/
 
-function setupKeypresses(state){
+function setupKeypresses(state, gl){
     document.addEventListener("keydown", (event) => {
         console.log(event.code);
 
-        var object = state.objects[state.selectedIndex];
+        //var object = state.objects[state.selectedIndex];
 
         switch(event.code) {
         case "KeyA":
             console.log("YO");
+			addPiece(gl, state);
             break;
+			
+		case "ArrowLeft": //move left
+			state.currPiece.objects.forEach((object) => {
+				vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
+			});
+			break;
+		case "ArrowRight": //move right
+			state.currPiece.objects.forEach((object) => {
+				vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(1.0, 0.0, 0));
+			});
+			break;
+			
+		case "ArrowUp": //rotate positive (left)
+			state.currPiece.objects.forEach((object) => {
+				mat4.rotateZ(object.model.rotation, object.model.rotation, 1.5708);//1.5708 rad = 90 deg
+			});
+			break;
+			
+		case "ArrowDown": //rotate negative (right)
+			state.currPiece.objects.forEach((object) => {
+				mat4.rotateZ(object.model.rotation, object.model.rotation, -1.5708);//1.5708 rad = 90 deg
+			});
+			break;
+		
         default:
             break;
         }
@@ -295,6 +337,149 @@ function goodNormalShader(gl){
     }
 
     return programInfo;
+}
+/************************************
+ * TETRIS FUNCTIONS
+ ************************************/
+
+//adds a tetris piece to the screen 
+function addPiece(gl, state) {
+	
+	var piece = generateTetrisPeice(gl);
+	
+	//makes sure that when you add a piece, the old piece stops moving
+	/* if(state.currPiece != null) {  
+		state.currPiece.objects.forEach((object) => {
+			object.isCurr = false;
+		});
+	} */
+	
+	state.currPiece = piece;
+	
+	//add objects in tetris piece to scene
+	piece.objects.forEach((object) => {
+		//console.log(object);
+		//object.isCurr = true;
+	
+		//add transformations (the tetris piece rotates and translates)
+		object.model.piece_position = vec3.fromValues(4.0, 19.0, 0.0);
+		object.model.rotation = mat4.create();
+		
+		state.objects.push(object);
+        initCubeBuffers(gl, object);
+    });
+	return;
+}
+
+
+function generateTetrisPeice(gl) {
+	var piece;
+	var rand = 1;	//random number % num_shapes
+	
+	switch(rand) {
+		case 0:
+			piece = {
+			objects: [
+			{
+				model: {
+					cube_position: vec3.fromValues(-1.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(-1.0, -1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, -1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			],};
+			break;
+			//end piece 1
+	
+	
+		case 1:
+			piece = {
+			objects: [
+			{
+				model: {
+					cube_position: vec3.fromValues(-1.0, 1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, -1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},],
+			};
+			break;
+	};
+	return piece;
 }
 
 /************************************

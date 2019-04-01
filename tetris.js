@@ -66,15 +66,7 @@ function main() {
         //selectedIndex: 0,
 		
 		currPiece: null, //the tetris piece that is currently moving
-		
-		/* currPieceTransform: { //the transformation of the tetris piece that is currently moving
-			//position: vec3.fromValues(5.0, 20.0, 0.0),
-			position: vec3.fromValues(0.0, 0.0, 0.0),
-			rotation: mat4.create(), // Identity matrix
-			scale: vec3.fromValues(1.0, 1.0, 1.0),
-		}, */
-		
-		//pieces = null,
+
     };
 
     state.objects.forEach((object) => {
@@ -235,8 +227,6 @@ function setupKeypresses(state, gl){
     document.addEventListener("keydown", (event) => {
         console.log(event.code);
 
-        //var object = state.objects[state.selectedIndex];
-
         switch(event.code) {
         case "KeyA":
             console.log("YO");
@@ -361,19 +351,10 @@ function addPiece(gl, state) {
 	
 	var piece = generateTetrisPeice(gl);
 	
-	//makes sure that when you add a piece, the old piece stops moving
-	/* if(state.currPiece != null) {  
-		state.currPiece.objects.forEach((object) => {
-			object.isCurr = false;
-		});
-	} */
-	
 	state.currPiece = piece;
 	
 	//add objects in tetris piece to scene
 	piece.objects.forEach((object) => {
-		//console.log(object);
-		//object.isCurr = true;
 	
 		//add transformations (the tetris piece rotates and translates)
 		object.model.piece_position = vec3.fromValues(4.0, 19.0, 0.0);

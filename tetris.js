@@ -369,7 +369,7 @@ function addPiece(gl, state) {
 
 function generateTetrisPeice(gl) {
 	var piece;
-	var rand = 1;	//random number % num_shapes
+	var rand = 6;	//random number % num_shapes
 	
 	switch(rand) {
 		case 0: //square
@@ -626,12 +626,12 @@ function generateTetrisPeice(gl) {
 			],};
 			break;
 			//end
-		case 5: //TODO forward z
+		case 5: //forward z
 			piece = {
 			objects: [
 			{
 				model: {
-					cube_position: vec3.fromValues(-1.0, 0.0, 0.0),
+					cube_position: vec3.fromValues(1.0, 0.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
@@ -653,7 +653,7 @@ function generateTetrisPeice(gl) {
 			},
 			{
 				model: {
-					cube_position: vec3.fromValues(-1.0, -1.0, 0.0),
+					cube_position: vec3.fromValues(1.0, -1.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
@@ -664,7 +664,7 @@ function generateTetrisPeice(gl) {
 			},
 			{
 				model: {
-					cube_position: vec3.fromValues(0.0, -1.0, 0.0),
+					cube_position: vec3.fromValues(0.0, 1.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
@@ -715,7 +715,7 @@ function generateTetrisPeice(gl) {
 			},
 			{
 				model: {
-					cube_position: vec3.fromValues(0.0, -1.0, 0.0),
+					cube_position: vec3.fromValues(0.0, 1.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),

@@ -66,15 +66,7 @@ function main() {
         //selectedIndex: 0,
 		
 		currPiece: null, //the tetris piece that is currently moving
-		
-		/* currPieceTransform: { //the transformation of the tetris piece that is currently moving
-			//position: vec3.fromValues(5.0, 20.0, 0.0),
-			position: vec3.fromValues(0.0, 0.0, 0.0),
-			rotation: mat4.create(), // Identity matrix
-			scale: vec3.fromValues(1.0, 1.0, 1.0),
-		}, */
-		
-		//pieces = null,
+
     };
 
     state.objects.forEach((object) => {
@@ -107,7 +99,7 @@ function startRendering(gl, state) {
         const deltaTime = now - then;
         then = now;
 
-        updateState(deltaTime, state);
+        updateState(deltaTime, state, gl);
 
         // Draw our scene
         drawScene(gl, state);
@@ -120,14 +112,24 @@ function startRendering(gl, state) {
     requestAnimationFrame(render);
 }
 
-function updateState(deltaTime, state) {
+function updateState(deltaTime, state, gl) {
     // Update state as you wish here.  Gets called every frame.
-	//var currPiece = state.currPiece;
+	
     state.currPiece.objects.forEach((object) => {
-        //mat4.rotate(object.model.rotation, object.model.rotation, deltaTime * 2, vec3.fromValues(1.0, 1.0, 1.0));   
-        //vec3.add(object.model.position, object.model.position, vec3.fromValues(0, -0.1, 0));
-		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.02, 0));
+		console.log(object.model.cube_position[1]);
+		collisionCheck(object.model, gl, state);
+		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.04, 0));
     });
+}
+
+//model is object.model
+function collisionCheck(model, gl, state){
+	if(model.piece_position[1] < 1){
+		addPiece(gl, state);
+	}
+}
+
+function sidesCheck(model){
 }
 
 function drawScene(gl, state) {
@@ -225,8 +227,6 @@ function setupKeypresses(state, gl){
     document.addEventListener("keydown", (event) => {
         console.log(event.code);
 
-        //var object = state.objects[state.selectedIndex];
-
         switch(event.code) {
         case "KeyA":
             console.log("YO");
@@ -235,12 +235,16 @@ function setupKeypresses(state, gl){
 			
 		case "ArrowLeft": //move left
 			state.currPiece.objects.forEach((object) => {
-				vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
+				if (object.model.piece_position[0] != 0) {
+					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
+				}
 			});
 			break;
 		case "ArrowRight": //move right
 			state.currPiece.objects.forEach((object) => {
-				vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(1.0, 0.0, 0));
+				if (object.model.piece_position[0] != 9) {
+					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(1.0, 0.0, 0));
+				}			
 			});
 			break;
 			
@@ -351,7 +355,6 @@ function addPiece(gl, state) {
 	
 	//add objects in tetris piece to scene
 	piece.objects.forEach((object) => {
-		//console.log(object);
 	
 		//add transformations (the tetris piece rotates and translates)
 		object.model.piece_position = vec3.fromValues(4.0, 19.0, 0.0);
@@ -366,10 +369,10 @@ function addPiece(gl, state) {
 
 function generateTetrisPeice(gl) {
 	var piece;
-	var rand = 4;	//random number % num_shapes
+	var rand = 1;	//random number % num_shapes
 	
 	switch(rand) {
-		case 0: //square piece
+		case 0: //square
 			piece = {
 			objects: [
 			{
@@ -420,8 +423,8 @@ function generateTetrisPeice(gl) {
 			break;
 			//end
 	
-	
-		case 1: // forwards L piece
+	 
+		case 1: //forwards L
 			piece = {
 			objects: [
 			{
@@ -471,20 +474,9 @@ function generateTetrisPeice(gl) {
 			};
 			break;
 			
-		case 2:  // Backwards L Piece
+		case 2: //backwards L
 			piece = {
 			objects: [
-			{
-				model: {
-					cube_position: vec3.fromValues(1.0, 1.0, 0.0),
-					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
-					rotation: mat4.create(), // Identity matrix
-					scale: vec3.fromValues(0.5, 0.5, 0.5),
-				},
-				programInfo: goodNormalShader(gl),
-				buffers: null,
-				texture: null,
-			},
 			{
 				model: {
 					cube_position: vec3.fromValues(0.0, 1.0, 0.0),
@@ -499,6 +491,17 @@ function generateTetrisPeice(gl) {
 			{
 				model: {
 					cube_position: vec3.fromValues(0.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(1.0, 1.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
@@ -572,8 +575,58 @@ function generateTetrisPeice(gl) {
 			],};
 			break;
 			//end
-			
-		case 4: // straight row piece
+		
+		case 4: //tall piece
+			piece = {
+			objects: [
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, -1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, -2.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			],};
+			break;
+			//end
+		case 5: //TODO forward z
 			piece = {
 			objects: [
 			{
@@ -600,7 +653,7 @@ function generateTetrisPeice(gl) {
 			},
 			{
 				model: {
-					cube_position: vec3.fromValues(1.0, 0.0, 0.0),
+					cube_position: vec3.fromValues(-1.0, -1.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
@@ -611,7 +664,58 @@ function generateTetrisPeice(gl) {
 			},
 			{
 				model: {
-					cube_position: vec3.fromValues(-2.0, 0.0, 0.0),
+					cube_position: vec3.fromValues(0.0, -1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			],};
+			break;
+			//end
+			
+		case 6: //TODO backwards z
+			piece = {
+			objects: [
+			{
+				model: {
+					cube_position: vec3.fromValues(-1.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, 0.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(-1.0, -1.0, 0.0),
+					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
+					rotation: mat4.create(), // Identity matrix
+					scale: vec3.fromValues(0.5, 0.5, 0.5),
+				},
+				programInfo: goodNormalShader(gl),
+				buffers: null,
+				texture: null,
+			},
+			{
+				model: {
+					cube_position: vec3.fromValues(0.0, -1.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
@@ -624,6 +728,7 @@ function generateTetrisPeice(gl) {
 			break;
 			//end
 	};
+	
 	return piece;
 }
 

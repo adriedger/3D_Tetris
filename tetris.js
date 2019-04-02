@@ -98,7 +98,7 @@ function startRendering(gl, state) {
         now *= 0.001; // convert to seconds
         const deltaTime = now - then;
         then = now;
-
+            
         updateState(deltaTime, state, gl);
 
         // Draw our scene
@@ -114,24 +114,38 @@ function startRendering(gl, state) {
 
 function updateState(deltaTime, state, gl) {
     // Update state as you wish here.  Gets called every frame.
-	
+	console.log("yo");
     state.currPiece.objects.forEach((object) => {
-		console.log(object.model.cube_position[1]);
-		collisionCheck(object.model, gl, state);
-		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.04, 0));
+		//console.log(object.model.cube_position[1]);
+        var temp = vec3.fromValues(0.0, 0.0, 0.0);
+        vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
+        vec3.add(temp, temp, object.model.piece_position);
+		console.log(temp);
+		collisionCheck(temp, gl, state);
+		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.05, 0));
     });
 }
 
 //model is object.model
-function collisionCheck(model, gl, state){
-	if(model.piece_position[1] < 1){
+function collisionCheck(cube, gl, state){
+	if(cube[1] <= 0){
 		addPiece(gl, state);
 	}
 }
-
-function sidesCheck(model){
+/*
+function sidesCheck(state){
+    state.currPiece.objects.forEach((object) => {
+        var temp = vec3.fromValues(0.0, 0.0, 0.0);
+        vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
+        vec3.add(temp, temp, object.model.piece_position);
+        if (temp[0] == 0 || temp[0] == 9) {
+            return false;
+            //vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
+        }
+    });
+    return true;
 }
-
+*/
 function drawScene(gl, state) {
     // Set clear colour
     // This is a Red-Green-Blue-Alpha colour
@@ -234,20 +248,40 @@ function setupKeypresses(state, gl){
             break;
 			
 		case "ArrowLeft": //move left
+            var move = true;
 			state.currPiece.objects.forEach((object) => {
-				if (object.model.piece_position[0] != 0) {
-					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
+                var temp = vec3.fromValues(0.0, 0.0, 0.0);
+                vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
+                vec3.add(temp, temp, object.model.piece_position);
+				if (temp[0] == 0) {
+                    move = false;
+					//vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
 				}
-			});
+            });
+            if (move) {
+                state.currPiece.objects.forEach((object) => {
+					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
+				});
+            }
+			
 			break;
 		case "ArrowRight": //move right
+			var move = true;
 			state.currPiece.objects.forEach((object) => {
-				if (object.model.piece_position[0] != 9) {
+                var temp = vec3.fromValues(0.0, 0.0, 0.0);
+                vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
+                vec3.add(temp, temp, object.model.piece_position);
+				if (temp[0] == 9) {
+                    move = false;
+				}
+            });
+            if (move) {
+                state.currPiece.objects.forEach((object) => {
 					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(1.0, 0.0, 0));
-				}			
-			});
-			break;
-			
+				});
+            }		
+                
+            break;
 		case "ArrowUp": //rotate positive (left)
 			state.currPiece.objects.forEach((object) => {
 				mat4.rotateZ(object.model.rotation, object.model.rotation, 1.5708);//1.5708 rad = 90 deg

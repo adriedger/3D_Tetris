@@ -59,11 +59,7 @@ function main() {
                 texture: null,
             }, 
         ],
-        //usingGoodShader: false,
-        //goodShader: goodNormalShader(gl),
-        //badShader: badNormalShader(gl),
         canvas: canvas,
-        //selectedIndex: 0,
 		
 		currPiece: null, //the tetris piece that is currently moving
 
@@ -98,11 +94,11 @@ function startRendering(gl, state) {
         now *= 0.001; // convert to seconds
         const deltaTime = now - then;
         then = now;
-        //if (now%2 < 1 && flag) {
+        //if (now%1 < 0.5 && flag) {
 			updateState(deltaTime, state, gl);
 		//	flag = false;
 		//}
-		//if (now%2 > 1) {
+		//if (now%1 > 0.5) {
 		//	flag = true;
 		//}
 
@@ -120,44 +116,29 @@ function startRendering(gl, state) {
 function updateState(deltaTime, state, gl) {
     // Update state as you wish here.  Gets called every frame.
 	console.log("yo");
-    state.currPiece.objects.forEach((object) => {
-		//console.log(object.model.cube_position[1]);
+    //state.currPiece.objects.forEach((object) => {
+	var reachBottom = false
+	state.currPiece.objects.some(function(object) {
         var temp = vec3.fromValues(0.0, 0.0, 0.0);
         vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
         vec3.add(temp, temp, object.model.piece_position);
-		//console.log(object.model.rotation);
-
-		//var cubeMatrix = mat4.create();
-		//mat4.translate(cubeMatrix, cubeMatrix, object.model.piece_position);
-        //mat4.mul(cubeMatrix, cubeMatrix, object.model.rotation);
-		//mat4.translate(cubeMatrix, cubeMatrix, object.model.cube_position);
-		//mat4.scale(cubeMatrix, cubeMatrix, object.model.scale);
-		//var temp = vec3.fromValues(0.0, 0.0, 0.0)
-		//mat4.getTranslation(temp, cubeMatrix)
+	
 		console.log(Math.round(temp[0]), Math.round(temp[1]));
-		collisionCheck(temp, gl, state);
+		//collisionCheck(temp, gl, state);
+		if(temp[1] <= 0){
+			reachBottom = true;			
+		}
 		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.05, 0));
     });
+	if (reachBottom) {addPiece(gl, state);}
 }
 
-//model is object.model
+/*
 function collisionCheck(cube, gl, state){
 	if(cube[1] <= 0){
 		addPiece(gl, state);
+		console.log("!!!!!!")
 	}
-}
-/*
-function sidesCheck(state){
-    state.currPiece.objects.forEach((object) => {
-        var temp = vec3.fromValues(0.0, 0.0, 0.0);
-        vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
-        vec3.add(temp, temp, object.model.piece_position);
-        if (temp[0] == 0 || temp[0] == 9) {
-            return false;
-            //vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
-        }
-    });
-    return true;
 }
 */
 function drawScene(gl, state) {

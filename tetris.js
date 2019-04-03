@@ -92,14 +92,19 @@ function main() {
 function startRendering(gl, state) {
     // A variable for keeping track of time between frames
     var then = 0.0;
-
+	//var flag = true;
     // This function is called when we want to render a frame to the canvas
     function render(now) {
         now *= 0.001; // convert to seconds
         const deltaTime = now - then;
         then = now;
-            
-        updateState(deltaTime, state, gl);
+        //if (now%2 < 1 && flag) {
+			updateState(deltaTime, state, gl);
+		//	flag = false;
+		//}
+		//if (now%2 > 1) {
+		//	flag = true;
+		//}
 
         // Draw our scene
         drawScene(gl, state);
@@ -120,7 +125,16 @@ function updateState(deltaTime, state, gl) {
         var temp = vec3.fromValues(0.0, 0.0, 0.0);
         vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
         vec3.add(temp, temp, object.model.piece_position);
-		console.log(temp);
+		//console.log(object.model.rotation);
+
+		//var cubeMatrix = mat4.create();
+		//mat4.translate(cubeMatrix, cubeMatrix, object.model.piece_position);
+        //mat4.mul(cubeMatrix, cubeMatrix, object.model.rotation);
+		//mat4.translate(cubeMatrix, cubeMatrix, object.model.cube_position);
+		//mat4.scale(cubeMatrix, cubeMatrix, object.model.scale);
+		//var temp = vec3.fromValues(0.0, 0.0, 0.0)
+		//mat4.getTranslation(temp, cubeMatrix)
+		console.log(Math.round(temp[0]), Math.round(temp[1]));
 		collisionCheck(temp, gl, state);
 		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.05, 0));
     });
@@ -248,16 +262,18 @@ function setupKeypresses(state, gl){
             break;
 			
 		case "ArrowLeft": //move left
+			//does a precheck of the move to see if it takes it out of bounds
             var move = true;
 			state.currPiece.objects.forEach((object) => {
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
                 vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
                 vec3.add(temp, temp, object.model.piece_position);
-				if (temp[0] == 0) {
+				if (Math.round(temp[0]) == 0) {
                     move = false;
 					//vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
 				}
             });
+
             if (move) {
                 state.currPiece.objects.forEach((object) => {
 					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
@@ -271,10 +287,11 @@ function setupKeypresses(state, gl){
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
                 vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
                 vec3.add(temp, temp, object.model.piece_position);
-				if (temp[0] == 9) {
+				if (Math.round(temp[0]) == 9) {
                     move = false;
 				}
             });
+
             if (move) {
                 state.currPiece.objects.forEach((object) => {
 					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(1.0, 0.0, 0));
@@ -283,15 +300,46 @@ function setupKeypresses(state, gl){
                 
             break;
 		case "ArrowUp": //rotate positive (left)
+			//precheck rotation
+			var move = true;
 			state.currPiece.objects.forEach((object) => {
-				mat4.rotateZ(object.model.rotation, object.model.rotation, 1.5708);//1.5708 rad = 90 deg
-			});
-			break;
-			
+                var temp = vec3.fromValues(0.0, 0.0, 0.0);
+				var temp2 = mat4.create();
+				mat4.rotateZ(temp2, object.model.rotation, 1.5708);
+                vec3.transformMat4(temp, object.model.cube_position, temp2);
+                vec3.add(temp, temp, object.model.piece_position);
+				if (Math.round(temp[0]) < 0 || Math.round(temp[0]) > 9) {
+                    move = false;
+				}
+            });
+
+            if (move) {
+                state.currPiece.objects.forEach((object) => {
+					mat4.rotateZ(object.model.rotation, object.model.rotation, 1.5708);//1.5708 rad = 90 deg
+				});
+            }
+
+			break;			
 		case "ArrowDown": //rotate negative (right)
+			//precheck rotation
+			var move = true;
 			state.currPiece.objects.forEach((object) => {
-				mat4.rotateZ(object.model.rotation, object.model.rotation, -1.5708);//1.5708 rad = 90 deg
-			});
+                var temp = vec3.fromValues(0.0, 0.0, 0.0);
+				var temp2 = mat4.create();
+				mat4.rotateZ(temp2, object.model.rotation, -1.5708);
+                vec3.transformMat4(temp, object.model.cube_position, temp2);
+                vec3.add(temp, temp, object.model.piece_position);
+				if (Math.round(temp[0]) < 0 || Math.round(temp[0]) > 9) {
+                    move = false;
+				}
+            });
+
+            if (move) {
+                state.currPiece.objects.forEach((object) => {
+					mat4.rotateZ(object.model.rotation, object.model.rotation, -1.5708);
+				});
+            }
+
 			break;
 		
         default:

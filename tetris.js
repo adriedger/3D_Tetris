@@ -261,7 +261,7 @@ function setupKeypresses(state, gl){
 				if (Math.round(object.current_position[0]) == 0) {
                     move = false;
 				}
-				//set piece checker
+				//set-piece checker
 				var count = 0;
 				var max = state.objects.length - 4;
 				state.objects.some(function(setCube) {
@@ -288,7 +288,7 @@ function setupKeypresses(state, gl){
 				if (Math.round(object.current_position[0]) == 9) {
                     move = false;
 				}
-				//set piece checker
+				//set-piece checker
 				var count = 0;
 				var max = state.objects.length - 4;
 				state.objects.some(function(setCube) {
@@ -316,11 +316,23 @@ function setupKeypresses(state, gl){
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
 				var temp2 = mat4.create();
 				mat4.rotateZ(temp2, object.model.rotation, Math.PI/2);
-                vec3.transformMat4(temp, object.model.cube_position, temp2);
-                vec3.add(temp, temp, object.model.piece_position);
-				if (Math.round(temp[0]) < 0 || Math.round(temp[0]) > 9) {
+                //vec3.transformMat4(temp, object.model.cube_position, temp2);
+                //vec3.add(temp, temp, object.model.piece_position);
+				temp = getCubePostition(object.model.cube_position, object.model.piece_position, temp2);
+				if (temp[0] < 0 || temp[0] > 9) {
                     move = false;
 				}
+				//set-piece checker
+				var count = 0;
+				var max = state.objects.length - 4;
+				state.objects.some(function(setCube) {
+					if (temp[0] == setCube.current_position[0]
+						&& temp[1] == setCube.current_position[1]) {
+						move = false;
+					}
+					count += 1;
+					return count === max;
+				});
             });
 
             if (move) {
@@ -338,11 +350,21 @@ function setupKeypresses(state, gl){
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
 				var temp2 = mat4.create();
 				mat4.rotateZ(temp2, object.model.rotation, -Math.PI/2);
-                vec3.transformMat4(temp, object.model.cube_position, temp2);
-                vec3.add(temp, temp, object.model.piece_position);
-				if (Math.round(temp[0]) < 0 || Math.round(temp[0]) > 9) {
+                temp = getCubePostition(object.model.cube_position, object.model.piece_position, temp2);				
+				if (temp[0] < 0 || temp[0] > 9) {
                     move = false;
 				}
+				//set-piece checker
+				var count = 0;
+				var max = state.objects.length - 4;
+				state.objects.some(function(setCube) {
+					if (temp[0] == setCube.current_position[0]
+						&& temp[1] == setCube.current_position[1]) {
+						move = false;
+					}
+					count += 1;
+					return count === max;
+				});
             });
 
             if (move) {

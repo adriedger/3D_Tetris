@@ -70,9 +70,6 @@ function main() {
     state.objects.forEach((object) => {
         initCubeBuffers(gl, object);
     });
-
-	//var allPieces = initializeTetrisPeices(gl);
-	//addPiece(gl, allPieces, state);
 	
 	addPiece(gl, state)
 	
@@ -91,19 +88,18 @@ function main() {
 function startRendering(gl, state) {
     // A variable for keeping track of time between frames
     var then = 0.0;
-	//var flag = true;
+	var flag = true;
     // This function is called when we want to render a frame to the canvas
     function render(now) {
         now *= 0.001; // convert to seconds
-        //const deltaTime = now - then;
-        //then = now;
-        //if (now%1 < 0.5 && flag) {
+        
+        if (now%0.5 < 0.25 && flag) {
 			updateState(state, gl);
-		//	flag = false;
-		//}
-		//if (now%1 > 0.5) {
-		//	flag = true;
-		//}
+			flag = false;
+		}
+		if (now%0.5 > 0.25) {
+			flag = true;
+		}
 
         // Draw our scene
         drawScene(gl, state);
@@ -121,29 +117,29 @@ function updateState(state, gl) {
 	var reachBottom = false
 	state.currPiece.objects.some(function(object) {
 		
-		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.05, 0));
-
-        object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation)
-		console.log(object.current_position);
+		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -1, 0));
+        object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
+		
+		//console.log(object.current_position);//here
 		if(object.current_position[1] <= 0){
 			reachBottom = true;			
 		}
-
+		//set pieces checker
 		var count = 0;
 		var max = state.objects.length - 4;
 		state.objects.some(function(setCube) {
-			//console.log(setCube.current_position);
+			
 			if (object.current_position[1] <= setCube.current_position[1]+1
 				&& object.current_position[1] > setCube.current_position[1]
 				&& Math.round(object.current_position[0]) == Math.round(setCube.current_position[0])) {
-				//console.log("yo");
+				
 				reachBottom = true;
 			}
 			count += 1;
 			return count === max;
 		});
 		
-    });
+    });	
 	if (reachBottom) {addPiece(gl, state);}
 }
 
@@ -152,6 +148,33 @@ function getCubePostition(relative, piece, rotation) {
     vec3.transformMat4(temp, relative, rotation);
     vec3.add(temp, temp, piece);
 	return temp;
+}
+
+function checkLine(state) {
+	var indexes = [];
+	state.objects.some(function(obj1) {
+		var count = 0;
+		var index = 0;
+		state.objects.some(function(obj2) {
+			if (Math.round(obj1.current_position[1]) == Math.round(obj2.current_position[1])) {
+				count += 1;
+				indexes.push(index);
+			}
+			index +=1;
+		});
+		if (count == 10) {
+			indexes.reverse();//reverse order of indexes to delete them properly
+			indexes.some(function(i) {//remove cubes
+				state.objects.splice(i,1);
+			});
+			state.objects.forEach((object) => {//shift remaining cubes down
+				vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -1.0, 0));
+				object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
+			});
+			return true;
+		}
+		indexes = [];
+	});
 }
 
 function drawScene(gl, state) {
@@ -247,7 +270,7 @@ function drawScene(gl, state) {
 
 function setupKeypresses(state, gl){
     document.addEventListener("keydown", (event) => {
-        console.log(event.code);
+        //console.log(event.code);
 
         switch(event.code) {
         case "KeyA":
@@ -261,26 +284,23 @@ function setupKeypresses(state, gl){
 				if (Math.round(object.current_position[0]) == 0) {
                     move = false;
 				}
-				/*
+				//set-piece checker
 				var count = 0;
 				var max = state.objects.length - 4;
 				state.objects.some(function(setCube) {
-					//console.log(setCube.current_position);
-					if (object.current_position[0] <= setCube.current_position[1]+1
-						&& object.current_position[1] > setCube.current_position[1]
-						&& Math.round(object.current_position[0]) == Math.round(setCube.current_position[0])) {
-						//console.log("yo");
-						reachBottom = true;
+					if (object.current_position[0] == setCube.current_position[0]+1
+						&& object.current_position[1] == setCube.current_position[1]) {
+						move = false;
 					}
 					count += 1;
 					return count === max;
-				});
-				*/
+				});				
             });
 
             if (move) {
                 state.currPiece.objects.forEach((object) => {
 					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
+					object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
 				});
             }
 			
@@ -291,11 +311,23 @@ function setupKeypresses(state, gl){
 				if (Math.round(object.current_position[0]) == 9) {
                     move = false;
 				}
+				//set-piece checker
+				var count = 0;
+				var max = state.objects.length - 4;
+				state.objects.some(function(setCube) {
+					if (object.current_position[0] == setCube.current_position[0]-1
+						&& object.current_position[1] == setCube.current_position[1]) {
+						move = false;
+					}
+					count += 1;
+					return count === max;
+				});
             });
 
             if (move) {
                 state.currPiece.objects.forEach((object) => {
 					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(1.0, 0.0, 0));
+					object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
 				});
             }		
                 
@@ -307,16 +339,27 @@ function setupKeypresses(state, gl){
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
 				var temp2 = mat4.create();
 				mat4.rotateZ(temp2, object.model.rotation, Math.PI/2);
-                vec3.transformMat4(temp, object.model.cube_position, temp2);
-                vec3.add(temp, temp, object.model.piece_position);
-				if (Math.round(temp[0]) < 0 || Math.round(temp[0]) > 9) {
+				temp = getCubePostition(object.model.cube_position, object.model.piece_position, temp2);
+				if (temp[0] < 0 || temp[0] > 9) {
                     move = false;
 				}
+				//set-piece checker
+				var count = 0;
+				var max = state.objects.length - 4;
+				state.objects.some(function(setCube) {
+					if (temp[0] == setCube.current_position[0]
+						&& temp[1] == setCube.current_position[1]) {
+						move = false;
+					}
+					count += 1;
+					return count === max;
+				});
             });
 
             if (move) {
                 state.currPiece.objects.forEach((object) => {
 					mat4.rotateZ(object.model.rotation, object.model.rotation, Math.PI/2);//1.5708 rad = 90 deg
+					object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
 				});
             }
 
@@ -328,16 +371,27 @@ function setupKeypresses(state, gl){
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
 				var temp2 = mat4.create();
 				mat4.rotateZ(temp2, object.model.rotation, -Math.PI/2);
-                vec3.transformMat4(temp, object.model.cube_position, temp2);
-                vec3.add(temp, temp, object.model.piece_position);
-				if (Math.round(temp[0]) < 0 || Math.round(temp[0]) > 9) {
+                temp = getCubePostition(object.model.cube_position, object.model.piece_position, temp2);				
+				if (temp[0] < 0 || temp[0] > 9) {
                     move = false;
 				}
+				//set-piece checker
+				var count = 0;
+				var max = state.objects.length - 4;
+				state.objects.some(function(setCube) {
+					if (temp[0] == setCube.current_position[0]
+						&& temp[1] == setCube.current_position[1]) {
+						move = false;
+					}
+					count += 1;
+					return count === max;
+				});
             });
 
             if (move) {
                 state.currPiece.objects.forEach((object) => {
 					mat4.rotateZ(object.model.rotation, object.model.rotation, -Math.PI/2);
+					object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
 				});
             }
 
@@ -432,6 +486,7 @@ function goodNormalShader(gl){
 //adds a tetris piece to the screen 
 function addPiece(gl, state) {
 	
+	checkLine(state);
 	var piece = generateTetrisPeice(gl);
 	
 	state.currPiece = piece;
@@ -442,22 +497,12 @@ function addPiece(gl, state) {
 		//add transformations (the tetris piece rotates and translates)
 		object.model.piece_position = vec3.fromValues(4.0, 19.0, 0.0);
 		object.model.rotation = mat4.create();
+		object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
 		
 		state.objects.push(object);
         initCubeBuffers(gl, object);
     });
 	
-	//prints cubes on board
-	/*
-	console.log("yo")
-	var count = 0;
-	var max = state.objects.length - 4;
-	state.objects.some(function(object) {
-		console.log(object.current_position);
-		count += 1;
-		return count === max;
-	});
-	*/
 	return;
 }
 

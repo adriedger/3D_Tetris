@@ -95,8 +95,7 @@ function startRendering(gl, state) {
     // This function is called when we want to render a frame to the canvas
     function render(now) {
         now *= 0.001; // convert to seconds
-        //const deltaTime = now - then;
-        //then = now;
+        
         if (now%0.5 < 0.25 && flag) {
 			updateState(state, gl);
 			flag = false;
@@ -124,7 +123,7 @@ function updateState(state, gl) {
 		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -1, 0));
         object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
 		
-		console.log(object.current_position);
+		//console.log(object.current_position);//here
 		if(object.current_position[1] <= 0){
 			reachBottom = true;			
 		}
@@ -132,18 +131,18 @@ function updateState(state, gl) {
 		var count = 0;
 		var max = state.objects.length - 4;
 		state.objects.some(function(setCube) {
-			//console.log(setCube.current_position);
+			
 			if (object.current_position[1] <= setCube.current_position[1]+1
 				&& object.current_position[1] > setCube.current_position[1]
 				&& Math.round(object.current_position[0]) == Math.round(setCube.current_position[0])) {
-				//console.log("yo");
+				
 				reachBottom = true;
 			}
 			count += 1;
 			return count === max;
 		});
 		
-    });
+    });	
 	if (reachBottom) {addPiece(gl, state);}
 }
 
@@ -152,6 +151,44 @@ function getCubePostition(relative, piece, rotation) {
     vec3.transformMat4(temp, relative, rotation);
     vec3.add(temp, temp, piece);
 	return temp;
+}
+
+function checkLine(state) {
+	var indexes = [];
+	state.objects.some(function(obj1) {
+		var count = 0;
+		var index = 0;
+		state.objects.some(function(obj2) {
+			if (Math.round(obj1.current_position[1]) == Math.round(obj2.current_position[1])) {
+				count += 1;
+				indexes.push(index);
+			}
+			index +=1;
+		});
+		//console.log(count);
+		if (count == 10) {
+			//console.log("YOLO420");
+			//console.log(obj1.current_position[1]);
+			/*
+			var indexes = []
+			state.objects.some(function(obj2) {
+				if (Math.round(obj1.current_position[1]) == Math.round(obj2.current_position[1])) {
+					indexes.push(state.objects.indexOf(obj1));
+				}
+			});
+			indexes.some(function(i) {
+				state.objects.splice(i,1);
+			});
+			*/
+			indexes.reverse();//reverse order of indexes to delete them properly
+			return true;
+		}
+		indexes = [];
+	});
+	indexes.some(function(i) {
+		//console.log(i);
+		state.objects.splice(i,1);
+	});
 }
 
 function drawScene(gl, state) {
@@ -247,7 +284,7 @@ function drawScene(gl, state) {
 
 function setupKeypresses(state, gl){
     document.addEventListener("keydown", (event) => {
-        console.log(event.code);
+        //console.log(event.code);
 
         switch(event.code) {
         case "KeyA":
@@ -316,8 +353,6 @@ function setupKeypresses(state, gl){
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
 				var temp2 = mat4.create();
 				mat4.rotateZ(temp2, object.model.rotation, Math.PI/2);
-                //vec3.transformMat4(temp, object.model.cube_position, temp2);
-                //vec3.add(temp, temp, object.model.piece_position);
 				temp = getCubePostition(object.model.cube_position, object.model.piece_position, temp2);
 				if (temp[0] < 0 || temp[0] > 9) {
                     move = false;
@@ -465,6 +500,7 @@ function goodNormalShader(gl){
 //adds a tetris piece to the screen 
 function addPiece(gl, state) {
 	
+	checkLine(state);
 	var piece = generateTetrisPeice(gl);
 	
 	state.currPiece = piece;
@@ -481,17 +517,6 @@ function addPiece(gl, state) {
         initCubeBuffers(gl, object);
     });
 	
-	//prints cubes on board
-	/*
-	console.log("yo")
-	var count = 0;
-	var max = state.objects.length - 4;
-	state.objects.some(function(object) {
-		console.log(object.current_position);
-		count += 1;
-		return count === max;
-	});
-	*/
 	return;
 }
 

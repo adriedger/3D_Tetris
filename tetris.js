@@ -120,10 +120,11 @@ function updateState(state, gl) {
 
 	var reachBottom = false
 	state.currPiece.objects.some(function(object) {
+		
 		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.05, 0));
 
         object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation)
-	
+		console.log(object.current_position);
 		if(object.current_position[1] <= 0){
 			reachBottom = true;			
 		}
@@ -257,14 +258,24 @@ function setupKeypresses(state, gl){
 		case "ArrowLeft": //move left
             var move = true;
 			state.currPiece.objects.forEach((object) => {
-                //var temp = vec3.fromValues(0.0, 0.0, 0.0);
-                //vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
-                //vec3.add(temp, temp, object.model.piece_position);
-
 				if (Math.round(object.current_position[0]) == 0) {
                     move = false;
-					//vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
 				}
+				/*
+				var count = 0;
+				var max = state.objects.length - 4;
+				state.objects.some(function(setCube) {
+					//console.log(setCube.current_position);
+					if (object.current_position[0] <= setCube.current_position[1]+1
+						&& object.current_position[1] > setCube.current_position[1]
+						&& Math.round(object.current_position[0]) == Math.round(setCube.current_position[0])) {
+						//console.log("yo");
+						reachBottom = true;
+					}
+					count += 1;
+					return count === max;
+				});
+				*/
             });
 
             if (move) {
@@ -295,7 +306,7 @@ function setupKeypresses(state, gl){
 			state.currPiece.objects.forEach((object) => {
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
 				var temp2 = mat4.create();
-				mat4.rotateZ(temp2, object.model.rotation, 1.5708);
+				mat4.rotateZ(temp2, object.model.rotation, Math.PI/2);
                 vec3.transformMat4(temp, object.model.cube_position, temp2);
                 vec3.add(temp, temp, object.model.piece_position);
 				if (Math.round(temp[0]) < 0 || Math.round(temp[0]) > 9) {
@@ -305,7 +316,7 @@ function setupKeypresses(state, gl){
 
             if (move) {
                 state.currPiece.objects.forEach((object) => {
-					mat4.rotateZ(object.model.rotation, object.model.rotation, 1.5708);//1.5708 rad = 90 deg
+					mat4.rotateZ(object.model.rotation, object.model.rotation, Math.PI/2);//1.5708 rad = 90 deg
 				});
             }
 
@@ -316,7 +327,7 @@ function setupKeypresses(state, gl){
 			state.currPiece.objects.forEach((object) => {
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
 				var temp2 = mat4.create();
-				mat4.rotateZ(temp2, object.model.rotation, -1.5708);
+				mat4.rotateZ(temp2, object.model.rotation, -Math.PI/2);
                 vec3.transformMat4(temp, object.model.cube_position, temp2);
                 vec3.add(temp, temp, object.model.piece_position);
 				if (Math.round(temp[0]) < 0 || Math.round(temp[0]) > 9) {
@@ -326,7 +337,7 @@ function setupKeypresses(state, gl){
 
             if (move) {
                 state.currPiece.objects.forEach((object) => {
-					mat4.rotateZ(object.model.rotation, object.model.rotation, -1.5708);
+					mat4.rotateZ(object.model.rotation, object.model.rotation, -Math.PI/2);
 				});
             }
 

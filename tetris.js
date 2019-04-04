@@ -70,9 +70,6 @@ function main() {
     state.objects.forEach((object) => {
         initCubeBuffers(gl, object);
     });
-
-	//var allPieces = initializeTetrisPeices(gl);
-	//addPiece(gl, allPieces, state);
 	
 	addPiece(gl, state)
 	
@@ -165,29 +162,18 @@ function checkLine(state) {
 			}
 			index +=1;
 		});
-		//console.log(count);
 		if (count == 10) {
-			//console.log("YOLO420");
-			//console.log(obj1.current_position[1]);
-			/*
-			var indexes = []
-			state.objects.some(function(obj2) {
-				if (Math.round(obj1.current_position[1]) == Math.round(obj2.current_position[1])) {
-					indexes.push(state.objects.indexOf(obj1));
-				}
-			});
-			indexes.some(function(i) {
+			indexes.reverse();//reverse order of indexes to delete them properly
+			indexes.some(function(i) {//remove cubes
 				state.objects.splice(i,1);
 			});
-			*/
-			indexes.reverse();//reverse order of indexes to delete them properly
+			state.objects.forEach((object) => {//shift remaining cubes down
+				vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -1.0, 0));
+				object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
+			});
 			return true;
 		}
 		indexes = [];
-	});
-	indexes.some(function(i) {
-		//console.log(i);
-		state.objects.splice(i,1);
 	});
 }
 

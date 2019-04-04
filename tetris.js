@@ -46,6 +46,7 @@ function main() {
                 programInfo: goodNormalShader(gl),
                 buffers: null,
                 texture: null,
+				current_position: vec3.fromValues(0.0, 0.0, 0.0),
             }, 
 			{
                 model: {
@@ -57,6 +58,7 @@ function main() {
                 programInfo: goodNormalShader(gl),
                 buffers: null,
                 texture: null,
+				current_position: vec3.fromValues(9.0, 19.0, 0.0),
             }, 
         ],
         canvas: canvas,
@@ -94,7 +96,7 @@ function startRendering(gl, state) {
     function render(now) {
         now *= 0.001; // convert to seconds
         //const deltaTime = now - then;
-        then = now;
+        //then = now;
         //if (now%1 < 0.5 && flag) {
 			updateState(state, gl);
 		//	flag = false;
@@ -119,13 +121,11 @@ function updateState(state, gl) {
 	//console.log("yo");
 	var reachBottom = false
 	state.currPiece.objects.some(function(object) {
-        var temp = vec3.fromValues(0.0, 0.0, 0.0);
-        vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
-        vec3.add(temp, temp, object.model.piece_position);
+        object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation)
 	
 		//console.log(Math.round(temp[0]), Math.round(temp[1]));
 		//collisionCheck(temp, gl, state);
-		if(temp[1] <= 0){
+		if(object.current_position[1] <= 0){
 			reachBottom = true;			
 		}
 		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.05, 0));
@@ -133,14 +133,13 @@ function updateState(state, gl) {
 	if (reachBottom) {addPiece(gl, state);}
 }
 
-/*
-function collisionCheck(cube, gl, state){
-	if(cube[1] <= 0){
-		addPiece(gl, state);
-		console.log("!!!!!!")
-	}
+function getCubePostition(relative, piece, rotation) {
+	var temp = vec3.fromValues(0.0, 0.0, 0.0);
+    vec3.transformMat4(temp, relative, rotation);
+    vec3.add(temp, temp, piece);
+	return temp;
 }
-*/
+
 function drawScene(gl, state) {
     // Set clear colour
     // This is a Red-Green-Blue-Alpha colour
@@ -243,13 +242,13 @@ function setupKeypresses(state, gl){
             break;
 			
 		case "ArrowLeft": //move left
-			//does a precheck of the move to see if it takes it out of bounds
             var move = true;
 			state.currPiece.objects.forEach((object) => {
-                var temp = vec3.fromValues(0.0, 0.0, 0.0);
-                vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
-                vec3.add(temp, temp, object.model.piece_position);
-				if (Math.round(temp[0]) == 0) {
+                //var temp = vec3.fromValues(0.0, 0.0, 0.0);
+                //vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
+                //vec3.add(temp, temp, object.model.piece_position);
+
+				if (Math.round(object.current_position[0]) == 0) {
                     move = false;
 					//vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
 				}
@@ -265,10 +264,7 @@ function setupKeypresses(state, gl){
 		case "ArrowRight": //move right
 			var move = true;
 			state.currPiece.objects.forEach((object) => {
-                var temp = vec3.fromValues(0.0, 0.0, 0.0);
-                vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
-                vec3.add(temp, temp, object.model.piece_position);
-				if (Math.round(temp[0]) == 9) {
+				if (Math.round(object.current_position[0]) == 9) {
                     move = false;
 				}
             });
@@ -432,14 +428,13 @@ function addPiece(gl, state) {
 	var count = 0;
 	var max = state.objects.length - 4;
 	state.objects.some(function(object) {
-		console.log(object.model.cube_position);
+		console.log(object.current_position);
 		count += 1;
 		return count === max;
 	});
 
 	return;
 }
-
 
 function generateTetrisPeice(gl) {
 	var piece;
@@ -452,17 +447,20 @@ function generateTetrisPeice(gl) {
 			{
 				model: {
 					cube_position: vec3.fromValues(-1.0, 0.0, 0.0),
+					//relative_position: vec3.fromValues(-1.0, 0.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
-					scale: vec3.fromValues(0.5, 0.5, 0.5),
+					scale: vec3.fromValues(0.5, 0.5, 0.5),					
 				},
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
 					cube_position: vec3.fromValues(0.0, 0.0, 0.0),
+					//relative_position: vec3.fromValues(0.0, 0.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
@@ -470,10 +468,12 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
 					cube_position: vec3.fromValues(-1.0, -1.0, 0.0),
+					//relative_position: vec3.fromValues(-1.0, -1.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
@@ -481,10 +481,12 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
 					cube_position: vec3.fromValues(0.0, -1.0, 0.0),
+					//relative_position: vec3.fromValues(0.0, -1.0, 0.0),
 					piece_position: vec3.fromValues(0.0, 0.0, 0.0),
 					rotation: mat4.create(), // Identity matrix
 					scale: vec3.fromValues(0.5, 0.5, 0.5),
@@ -492,6 +494,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			],};
 			break;

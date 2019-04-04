@@ -64,7 +64,7 @@ function main() {
         canvas: canvas,
 		
 		currPiece: null, //the tetris piece that is currently moving
-
+		isFirstPersonView: false,
     };
 
     state.objects.forEach((object) => {
@@ -278,6 +278,13 @@ function setupKeypresses(state, gl){
 			addPiece(gl, state);
             break;
 			
+		case "KeyF":
+			if (state.isFistPersonView) {
+				state.camera.up = vec3.fromValues(0.0, 1.0, 0.0);
+			}
+			state.isFirstPersonView = !(state.isFirstPersonView);
+			break;
+		
 		case "ArrowLeft": //move left
             var move = true;
 			state.currPiece.objects.forEach((object) => {
@@ -332,6 +339,7 @@ function setupKeypresses(state, gl){
             }		
                 
             break;
+		
 		case "ArrowUp": //rotate positive (left)
 			//prechecks rotation
 			var move = true;
@@ -357,6 +365,9 @@ function setupKeypresses(state, gl){
             });
 
             if (move) {
+				if(state.isFirstPersonView) {
+					vec3.rotateZ(state.camera.up, state.camera.up, vec3.fromValues(0.0, 0.0, 0.0), Math.PI/2);
+				}
                 state.currPiece.objects.forEach((object) => {
 					mat4.rotateZ(object.model.rotation, object.model.rotation, Math.PI/2);//1.5708 rad = 90 deg
 					object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
@@ -389,6 +400,9 @@ function setupKeypresses(state, gl){
             });
 
             if (move) {
+				if(state.isFirstPersonView) {
+					vec3.rotateZ(state.camera.up, state.camera.up, vec3.fromValues(0.0, 0.0, 0.0), -Math.PI/2);
+				}
                 state.currPiece.objects.forEach((object) => {
 					mat4.rotateZ(object.model.rotation, object.model.rotation, -Math.PI/2);
 					object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
@@ -585,6 +599,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -596,6 +611,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -607,6 +623,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -618,6 +635,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},],
 			};
 			break;
@@ -634,6 +652,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -645,6 +664,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -656,6 +676,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -667,6 +688,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			],};
 			break;
@@ -685,6 +707,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -696,6 +719,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -707,6 +731,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -718,6 +743,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			],};
 			break;
@@ -736,6 +762,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -747,6 +774,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -758,6 +786,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -769,6 +798,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			],};
 			break;
@@ -786,6 +816,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -797,6 +828,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -808,6 +840,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -819,12 +852,13 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			],};
 			break;
 			//end
 			
-		case 6: //TODO backwards z
+		case 6: // backwards z
 			piece = {
 			objects: [
 			{
@@ -837,6 +871,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -848,6 +883,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -859,6 +895,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			{
 				model: {
@@ -870,6 +907,7 @@ function generateTetrisPeice(gl) {
 				programInfo: goodNormalShader(gl),
 				buffers: null,
 				texture: null,
+				current_position: null,
 			},
 			],};
 			break;

@@ -117,18 +117,31 @@ function startRendering(gl, state) {
 }
 
 function updateState(state, gl) {
-    // Update state as you wish here.  Gets called every frame.
-	//console.log("yo");
+
 	var reachBottom = false
 	state.currPiece.objects.some(function(object) {
+		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.05, 0));
+
         object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation)
 	
-		//console.log(Math.round(temp[0]), Math.round(temp[1]));
-		//collisionCheck(temp, gl, state);
 		if(object.current_position[1] <= 0){
 			reachBottom = true;			
 		}
-		vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -0.05, 0));
+
+		var count = 0;
+		var max = state.objects.length - 4;
+		state.objects.some(function(setCube) {
+			//console.log(setCube.current_position);
+			if (object.current_position[1] <= setCube.current_position[1]+1
+				&& object.current_position[1] > setCube.current_position[1]
+				&& Math.round(object.current_position[0]) == Math.round(setCube.current_position[0])) {
+				//console.log("yo");
+				reachBottom = true;
+			}
+			count += 1;
+			return count === max;
+		});
+		
     });
 	if (reachBottom) {addPiece(gl, state);}
 }
@@ -424,6 +437,7 @@ function addPiece(gl, state) {
     });
 	
 	//prints cubes on board
+	/*
 	console.log("yo")
 	var count = 0;
 	var max = state.objects.length - 4;
@@ -432,7 +446,7 @@ function addPiece(gl, state) {
 		count += 1;
 		return count === max;
 	});
-
+	*/
 	return;
 }
 

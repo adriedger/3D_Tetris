@@ -77,6 +77,7 @@ function main() {
     setupKeypresses(state, gl);
 
     console.log("Starting rendering loop");
+	
     startRendering(gl, state);
 }
 
@@ -92,10 +93,10 @@ function startRendering(gl, state) {
     // This function is called when we want to render a frame to the canvas
     function render(now) {
         now *= 0.001; // convert to seconds
-        const deltaTime = now - then;
+        //const deltaTime = now - then;
         then = now;
         //if (now%1 < 0.5 && flag) {
-			updateState(deltaTime, state, gl);
+			updateState(state, gl);
 		//	flag = false;
 		//}
 		//if (now%1 > 0.5) {
@@ -113,17 +114,16 @@ function startRendering(gl, state) {
     requestAnimationFrame(render);
 }
 
-function updateState(deltaTime, state, gl) {
+function updateState(state, gl) {
     // Update state as you wish here.  Gets called every frame.
-	console.log("yo");
-    //state.currPiece.objects.forEach((object) => {
+	//console.log("yo");
 	var reachBottom = false
 	state.currPiece.objects.some(function(object) {
         var temp = vec3.fromValues(0.0, 0.0, 0.0);
         vec3.transformMat4(temp, object.model.cube_position, object.model.rotation);
         vec3.add(temp, temp, object.model.piece_position);
 	
-		console.log(Math.round(temp[0]), Math.round(temp[1]));
+		//console.log(Math.round(temp[0]), Math.round(temp[1]));
 		//collisionCheck(temp, gl, state);
 		if(temp[1] <= 0){
 			reachBottom = true;			
@@ -281,7 +281,7 @@ function setupKeypresses(state, gl){
                 
             break;
 		case "ArrowUp": //rotate positive (left)
-			//precheck rotation
+			//prechecks rotation
 			var move = true;
 			state.currPiece.objects.forEach((object) => {
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
@@ -302,7 +302,7 @@ function setupKeypresses(state, gl){
 
 			break;			
 		case "ArrowDown": //rotate negative (right)
-			//precheck rotation
+			//prechecks rotation
 			var move = true;
 			state.currPiece.objects.forEach((object) => {
                 var temp = vec3.fromValues(0.0, 0.0, 0.0);
@@ -426,6 +426,17 @@ function addPiece(gl, state) {
 		state.objects.push(object);
         initCubeBuffers(gl, object);
     });
+	
+	//prints cubes on board
+	console.log("yo")
+	var count = 0;
+	var max = state.objects.length - 4;
+	state.objects.some(function(object) {
+		console.log(object.model.cube_position);
+		count += 1;
+		return count === max;
+	});
+
 	return;
 }
 

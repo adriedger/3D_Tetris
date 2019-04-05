@@ -363,6 +363,7 @@ function addPiece(gl, state) {
 		state.objects.push(object);
         initCubeBuffers(gl, object);
     });
+	
 	return;
 }
 

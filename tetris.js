@@ -142,13 +142,26 @@ function updateState(state, gl) {
 		});
 		
     });	
-	if (reachBottom) {addPiece(gl, state);}
+	if (reachBottom) {
+		addPiece(gl, state);
+		if(state.isFirstPersonView) {
+			vec3.add(state.camera.center, state.camera.center, vec3.fromValues(0.0, 19.0, 0.0));
+			vec3.add(state.camera.position, state.camera.position, vec3.fromValues(0.0, 19.0, 0.0));
+		}
+	}
 	
 	//rotate camera
 	state.cameraTheta += 0.05;
     state.camera.position = vec3.fromValues(25.0 * Math.cos(state.cameraTheta), state.camera.position[1], 25.0 * Math.sin(state.cameraTheta));
-	console.log("new cam position");
-	console.log(state.camera.position);
+	
+	//first person falling
+	if(reachBottom == false) {
+		if(state.isFirstPersonView) {
+			vec3.add(state.camera.center, state.camera.center, vec3.fromValues(0.0, -1.0, 0.0));
+			vec3.add(state.camera.position, state.camera.position, vec3.fromValues(0.0, -1.0, 0.0));
+		}
+	}
+	
 }
 
 function getCubePostition(relative, piece, rotation) {
@@ -316,6 +329,10 @@ function setupKeypresses(state, gl){
             });
 
             if (move) {
+				if(state.isFirstPersonView) {
+					vec3.add(state.camera.center, state.camera.center, vec3.fromValues(-1.0, 0.0, 0.0));
+					vec3.add(state.camera.position, state.camera.position, vec3.fromValues(-1.0, 0.0, 0.0));
+				}
                 state.currPiece.objects.forEach((object) => {
 					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
 					object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
@@ -343,6 +360,10 @@ function setupKeypresses(state, gl){
             });
 
             if (move) {
+				if(state.isFirstPersonView) {
+					vec3.add(state.camera.center, state.camera.center, vec3.fromValues(1.0, 0.0, 0.0));
+					vec3.add(state.camera.position, state.camera.position, vec3.fromValues(1.0, 0.0, 0.0));
+				}
                 state.currPiece.objects.forEach((object) => {
 					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(1.0, 0.0, 0));
 					object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);

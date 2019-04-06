@@ -47,6 +47,7 @@ function main() {
                 buffers: null,
                 texture: null,
 				current_position: vec3.fromValues(0.0, 0.0, 0.0),
+				color: vec3.fromValues(0.0, 0.0, 0.0),
             }, 
 			{
                 model: {
@@ -59,6 +60,7 @@ function main() {
                 buffers: null,
                 texture: null,
 				current_position: vec3.fromValues(9.0, 19.0, 0.0),
+				color: vec3.fromValues(0.0, 0.0, 0.0),
             }, 
         ],
         canvas: canvas,
@@ -243,6 +245,9 @@ function drawScene(gl, state) {
             gl.uniform3fv(object.programInfo.uniformLocations.light0Position, state.lights[0].position);
             gl.uniform3fv(object.programInfo.uniformLocations.light0Colour, state.lights[0].colour);
             gl.uniform1f(object.programInfo.uniformLocations.light0Strength, state.lights[0].strength);
+			
+			//update color
+			gl.uniform3fv(object.programInfo.uniformLocations.color, object.color);
         }
 
 		{
@@ -454,9 +459,12 @@ function goodNormalShader(gl){
     out vec4 fragColor;
 
     in vec3 oNormal;
-
+	
+	uniform vec3 uColor;
+	
     void main() {
-        fragColor = vec4(abs(oNormal), 1.0);
+		vec3 temp = abs(oNormal) + abs(uColor);
+        fragColor = vec4(temp, 1.0);
     }
     `;
 
@@ -478,6 +486,7 @@ function goodNormalShader(gl){
             projection: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
             view: gl.getUniformLocation(shaderProgram, 'uViewMatrix'),
             model: gl.getUniformLocation(shaderProgram, 'uModelMatrix'),
+			color: gl.getUniformLocation(shaderProgram, 'uColor'),
         },
     };
 
@@ -487,6 +496,7 @@ function goodNormalShader(gl){
         programInfo.attribLocations.vertexNormal === -1 ||
         programInfo.uniformLocations.projection === -1 ||
         programInfo.uniformLocations.view === -1 ||
+		programInfo.uniformLocations.color === -1 ||
         programInfo.uniformLocations.model === -1 ) {
         printError('Shader Location Error', 'One or more of the uniform and attribute variables in the shaders could not be located');
     }
@@ -504,7 +514,11 @@ function addPiece(gl, state) {
 	var piece = generateTetrisPeice(gl);
 	
 	state.currPiece = piece;
-	
+
+	var color = vec3.create();
+	vec3.random(color); //makes a random unit vector (random color)
+	console.log("color");
+	console.log(color);
 	//add objects in tetris piece to scene
 	piece.objects.forEach((object) => {
 	
@@ -512,6 +526,8 @@ function addPiece(gl, state) {
 		object.model.piece_position = vec3.fromValues(4.0, 19.0, 0.0);
 		object.model.rotation = mat4.create();
 		object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
+		
+		object.color = color;
 		
 		state.objects.push(object);
         initCubeBuffers(gl, object);
@@ -541,6 +557,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -554,6 +571,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -567,6 +585,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -580,6 +599,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;
@@ -600,6 +620,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -612,6 +633,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -624,6 +646,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -636,6 +659,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},],
 			};
 			break;
@@ -653,6 +677,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -665,6 +690,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -677,6 +703,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -689,6 +716,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;
@@ -708,6 +736,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -744,6 +773,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;
@@ -763,6 +793,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -775,6 +806,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -787,6 +819,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -799,6 +832,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;
@@ -817,6 +851,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -829,6 +864,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -841,6 +877,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -853,6 +890,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;
@@ -872,6 +910,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -884,6 +923,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -896,6 +936,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -908,6 +949,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;

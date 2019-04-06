@@ -24,7 +24,7 @@ function main() {
     // Create a state for our scene
     var state = {
         camera: {
-            position: vec3.fromValues(5.0, 10.0, 20.0),
+            position: vec3.fromValues(5.0, 10.0, 25.0),
             center: vec3.fromValues(5.0, 10.0, 0.0),
             up: vec3.fromValues(0.0, 1.0, 0.0),
         },
@@ -64,7 +64,7 @@ function main() {
             }, 
         ],
         canvas: canvas,
-		
+		cameraTheta: 0.0,
 		currPiece: null, //the tetris piece that is currently moving
 		isFirstPersonView: false,
     };
@@ -143,6 +143,12 @@ function updateState(state, gl) {
 		
     });	
 	if (reachBottom) {addPiece(gl, state);}
+	
+	//rotate camera
+	state.cameraTheta += 0.05;
+    state.camera.position = vec3.fromValues(25.0 * Math.cos(state.cameraTheta), state.camera.position[1], 25.0 * Math.sin(state.cameraTheta));
+	console.log("new cam position");
+	console.log(state.camera.position);
 }
 
 function getCubePostition(relative, piece, rotation) {

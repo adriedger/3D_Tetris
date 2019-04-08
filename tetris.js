@@ -64,9 +64,10 @@ function main() {
             }, 
         ],
         canvas: canvas,
-		cameraTheta: 0.0,
+		cameraTheta: 1.4,
 		currPiece: null, //the tetris piece that is currently moving
 		isFirstPersonView: false,
+		isRotate: true,
     };
 
     state.objects.forEach((object) => {
@@ -145,14 +146,22 @@ function updateState(state, gl) {
 	if (reachBottom) {
 		addPiece(gl, state);
 		if(state.isFirstPersonView) {
-			vec3.add(state.camera.center, state.camera.center, vec3.fromValues(0.0, 19.0, 0.0));
-			vec3.add(state.camera.position, state.camera.position, vec3.fromValues(0.0, 19.0, 0.0));
+			var transX = 5.0 - state.camera.center[0]; // - 5.0;
+			var transY = 10.0 - state.camera.center[1];
+			
+			vec3.add(state.camera.center, state.camera.center, vec3.fromValues(transX, transY, 0.0));
+			vec3.add(state.camera.position, state.camera.position, vec3.fromValues(transX, transY, 0.0));
+			state.camera.up = vec3.fromValues(0.0, 1.0, 0.0);
 		}
 	}
 	
-	//rotate camera
-	state.cameraTheta += 0.05;
-    state.camera.position = vec3.fromValues(25.0 * Math.cos(state.cameraTheta), state.camera.position[1], 25.0 * Math.sin(state.cameraTheta));
+	if (state.isRotate) {
+		//rotate camera
+		state.cameraTheta += 0.05;
+		var transX = state.camera.center[0] - 5.0;
+		state.camera.position = vec3.fromValues(25 * Math.cos(state.cameraTheta), state.camera.position[1], 25.0 * Math.sin(state.cameraTheta));
+		state.camera.position[0] += transX;
+	}
 	
 	//first person falling
 	if(reachBottom == false) {
@@ -303,10 +312,19 @@ function setupKeypresses(state, gl){
             break;
 			
 		case "KeyF":
-			if (state.isFistPersonView) {
+			if (state.isFistPersonView == true) {
 				state.camera.up = vec3.fromValues(0.0, 1.0, 0.0);
 			}
 			state.isFirstPersonView = !(state.isFirstPersonView);
+			break;
+		case "KeyR":
+			if (state.isRotate) {
+				state.cameraTheta = 1.4;
+				var transX = state.camera.center[0] - 5.0;
+				state.camera.position = vec3.fromValues(25 * Math.cos(state.cameraTheta), state.camera.position[1], 25.0 * Math.sin(state.cameraTheta));
+				state.camera.position[0] += transX;
+			}
+			state.isRotate = ! state.isRotate;
 			break;
 		
 		case "ArrowLeft": //move left
@@ -329,7 +347,7 @@ function setupKeypresses(state, gl){
             });
 
             if (move) {
-				if(state.isFirstPersonView) {
+				if(state.isFirstPersonView == true) {
 					vec3.add(state.camera.center, state.camera.center, vec3.fromValues(-1.0, 0.0, 0.0));
 					vec3.add(state.camera.position, state.camera.position, vec3.fromValues(-1.0, 0.0, 0.0));
 				}

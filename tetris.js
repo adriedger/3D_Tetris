@@ -24,7 +24,7 @@ function main() {
     // Create a state for our scene
     var state = {
         camera: {
-            position: vec3.fromValues(5.0, 10.0, 20.0),
+            position: vec3.fromValues(5.0, 10.0, 25.0),
             center: vec3.fromValues(5.0, 10.0, 0.0),
             up: vec3.fromValues(0.0, 1.0, 0.0),
         },
@@ -47,6 +47,7 @@ function main() {
                 buffers: null,
                 texture: null,
 				current_position: vec3.fromValues(0.0, 0.0, 0.0),
+				color: vec3.fromValues(0.0, 0.0, 0.0),
             }, 
 			{
                 model: {
@@ -59,12 +60,14 @@ function main() {
                 buffers: null,
                 texture: null,
 				current_position: vec3.fromValues(9.0, 19.0, 0.0),
+				color: vec3.fromValues(0.0, 0.0, 0.0),
             }, 
         ],
         canvas: canvas,
-		
+		cameraTheta: 1.4,
 		currPiece: null, //the tetris piece that is currently moving
 		isFirstPersonView: false,
+		isRotate: true,
     };
 
     state.objects.forEach((object) => {
@@ -140,7 +143,34 @@ function updateState(state, gl) {
 		});
 		
     });	
-	if (reachBottom) {addPiece(gl, state);}
+	if (reachBottom) {
+		addPiece(gl, state);
+		if(state.isFirstPersonView) {
+			var transX = 5.0 - state.camera.center[0]; // - 5.0;
+			var transY = 10.0 - state.camera.center[1];
+			
+			vec3.add(state.camera.center, state.camera.center, vec3.fromValues(transX, transY, 0.0));
+			vec3.add(state.camera.position, state.camera.position, vec3.fromValues(transX, transY, 0.0));
+			state.camera.up = vec3.fromValues(0.0, 1.0, 0.0);
+		}
+	}
+	
+	if (state.isRotate) {
+		//rotate camera
+		state.cameraTheta += 0.05;
+		var transX = state.camera.center[0] - 5.0;
+		state.camera.position = vec3.fromValues(25 * Math.cos(state.cameraTheta), state.camera.position[1], 25.0 * Math.sin(state.cameraTheta));
+		state.camera.position[0] += transX;
+	}
+	
+	//first person falling
+	if(reachBottom == false) {
+		if(state.isFirstPersonView) {
+			vec3.add(state.camera.center, state.camera.center, vec3.fromValues(0.0, -1.0, 0.0));
+			vec3.add(state.camera.position, state.camera.position, vec3.fromValues(0.0, -1.0, 0.0));
+		}
+	}
+	
 }
 
 function getCubePostition(relative, piece, rotation) {
@@ -151,30 +181,37 @@ function getCubePostition(relative, piece, rotation) {
 }
 
 function checkLine(state) {
-	var indexes = [];
-	state.objects.some(function(obj1) {
-		var count = 0;
-		var index = 0;
-		state.objects.some(function(obj2) {
-			if (Math.round(obj1.current_position[1]) == Math.round(obj2.current_position[1])) {
-				count += 1;
-				indexes.push(index);
+	var lineCleared = true;
+	while(lineCleared){
+		lineCleared = false;
+		var indexes = [];
+		state.objects.some(function(obj1) {
+			var count = 0;
+			var index = 0;
+			state.objects.some(function(obj2) {
+				if (Math.round(obj1.current_position[1]) == Math.round(obj2.current_position[1])) {
+					count += 1;
+					indexes.push(index);
+				}
+				index +=1;
+			});
+			if (count == 10) {
+				indexes.reverse();//reverse order of indexes to delete them properly
+				indexes.some(function(i) {//remove cubes
+					state.objects.splice(i,1);
+				});
+				state.objects.forEach((object) => {//shift remaining cubes down
+					if (object.current_position[1] > obj1.current_position[1]) {
+						vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -1.0, 0));
+						object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
+					}
+				});
+				lineCleared = true;
+				return true;
 			}
-			index +=1;
+			indexes = [];
 		});
-		if (count == 10) {
-			indexes.reverse();//reverse order of indexes to delete them properly
-			indexes.some(function(i) {//remove cubes
-				state.objects.splice(i,1);
-			});
-			state.objects.forEach((object) => {//shift remaining cubes down
-				vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -1.0, 0));
-				object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
-			});
-			return true;
-		}
-		indexes = [];
-	});
+	}
 }
 
 function drawScene(gl, state) {
@@ -243,6 +280,9 @@ function drawScene(gl, state) {
             gl.uniform3fv(object.programInfo.uniformLocations.light0Position, state.lights[0].position);
             gl.uniform3fv(object.programInfo.uniformLocations.light0Colour, state.lights[0].colour);
             gl.uniform1f(object.programInfo.uniformLocations.light0Strength, state.lights[0].strength);
+			
+			//update color
+			gl.uniform3fv(object.programInfo.uniformLocations.color, object.color);
         }
 
 		{
@@ -279,10 +319,19 @@ function setupKeypresses(state, gl){
             break;
 			
 		case "KeyF":
-			if (state.isFistPersonView) {
+			if (state.isFistPersonView == true) {
 				state.camera.up = vec3.fromValues(0.0, 1.0, 0.0);
 			}
 			state.isFirstPersonView = !(state.isFirstPersonView);
+			break;
+		case "KeyR":
+			if (state.isRotate) {
+				state.cameraTheta = 1.4;
+				var transX = state.camera.center[0] - 5.0;
+				state.camera.position = vec3.fromValues(25 * Math.cos(state.cameraTheta), state.camera.position[1], 25.0 * Math.sin(state.cameraTheta));
+				state.camera.position[0] += transX;
+			}
+			state.isRotate = ! state.isRotate;
 			break;
 		
 		case "ArrowLeft": //move left
@@ -305,6 +354,10 @@ function setupKeypresses(state, gl){
             });
 
             if (move) {
+				if(state.isFirstPersonView == true) {
+					vec3.add(state.camera.center, state.camera.center, vec3.fromValues(-1.0, 0.0, 0.0));
+					vec3.add(state.camera.position, state.camera.position, vec3.fromValues(-1.0, 0.0, 0.0));
+				}
                 state.currPiece.objects.forEach((object) => {
 					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(-1.0, 0.0, 0));
 					object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
@@ -332,6 +385,10 @@ function setupKeypresses(state, gl){
             });
 
             if (move) {
+				if(state.isFirstPersonView) {
+					vec3.add(state.camera.center, state.camera.center, vec3.fromValues(1.0, 0.0, 0.0));
+					vec3.add(state.camera.position, state.camera.position, vec3.fromValues(1.0, 0.0, 0.0));
+				}
                 state.currPiece.objects.forEach((object) => {
 					vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(1.0, 0.0, 0));
 					object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
@@ -454,9 +511,12 @@ function goodNormalShader(gl){
     out vec4 fragColor;
 
     in vec3 oNormal;
-
+	
+	uniform vec3 uColor;
+	
     void main() {
-        fragColor = vec4(abs(oNormal), 1.0);
+		vec3 temp = abs(oNormal) + abs(uColor);
+        fragColor = vec4(temp, 1.0);
     }
     `;
 
@@ -478,6 +538,7 @@ function goodNormalShader(gl){
             projection: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
             view: gl.getUniformLocation(shaderProgram, 'uViewMatrix'),
             model: gl.getUniformLocation(shaderProgram, 'uModelMatrix'),
+			color: gl.getUniformLocation(shaderProgram, 'uColor'),
         },
     };
 
@@ -487,6 +548,7 @@ function goodNormalShader(gl){
         programInfo.attribLocations.vertexNormal === -1 ||
         programInfo.uniformLocations.projection === -1 ||
         programInfo.uniformLocations.view === -1 ||
+		programInfo.uniformLocations.color === -1 ||
         programInfo.uniformLocations.model === -1 ) {
         printError('Shader Location Error', 'One or more of the uniform and attribute variables in the shaders could not be located');
     }
@@ -504,7 +566,11 @@ function addPiece(gl, state) {
 	var piece = generateTetrisPeice(gl);
 	
 	state.currPiece = piece;
-	
+
+	var color = vec3.create();
+	vec3.random(color); //makes a random unit vector (random color)
+	console.log("color");
+	console.log(color);
 	//add objects in tetris piece to scene
 	piece.objects.forEach((object) => {
 	
@@ -512,6 +578,8 @@ function addPiece(gl, state) {
 		object.model.piece_position = vec3.fromValues(4.0, 19.0, 0.0);
 		object.model.rotation = mat4.create();
 		object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
+		
+		object.color = color;
 		
 		state.objects.push(object);
         initCubeBuffers(gl, object);
@@ -541,6 +609,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -554,6 +623,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -567,6 +637,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -580,6 +651,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;
@@ -600,6 +672,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -612,6 +685,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -624,6 +698,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -636,6 +711,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},],
 			};
 			break;
@@ -653,6 +729,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -665,6 +742,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -677,6 +755,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -689,6 +768,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;
@@ -708,6 +788,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -744,6 +825,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;
@@ -763,6 +845,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -775,6 +858,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -787,6 +871,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -799,6 +884,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;
@@ -817,6 +903,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -829,6 +916,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -841,6 +929,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -853,6 +942,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;
@@ -872,6 +962,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -884,6 +975,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -896,6 +988,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			{
 				model: {
@@ -908,6 +1001,7 @@ function generateTetrisPeice(gl) {
 				buffers: null,
 				texture: null,
 				current_position: null,
+				color:null,
 			},
 			],};
 			break;

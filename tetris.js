@@ -181,30 +181,37 @@ function getCubePostition(relative, piece, rotation) {
 }
 
 function checkLine(state) {
-	var indexes = [];
-	state.objects.some(function(obj1) {
-		var count = 0;
-		var index = 0;
-		state.objects.some(function(obj2) {
-			if (Math.round(obj1.current_position[1]) == Math.round(obj2.current_position[1])) {
-				count += 1;
-				indexes.push(index);
+	var lineCleared = true;
+	while(lineCleared){
+		lineCleared = false;
+		var indexes = [];
+		state.objects.some(function(obj1) {
+			var count = 0;
+			var index = 0;
+			state.objects.some(function(obj2) {
+				if (Math.round(obj1.current_position[1]) == Math.round(obj2.current_position[1])) {
+					count += 1;
+					indexes.push(index);
+				}
+				index +=1;
+			});
+			if (count == 10) {
+				indexes.reverse();//reverse order of indexes to delete them properly
+				indexes.some(function(i) {//remove cubes
+					state.objects.splice(i,1);
+				});
+				state.objects.forEach((object) => {//shift remaining cubes down
+					if (object.current_position[1] > obj1.current_position[1]) {
+						vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -1.0, 0));
+						object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
+					}
+				});
+				lineCleared = true;
+				return true;
 			}
-			index +=1;
+			indexes = [];
 		});
-		if (count == 10) {
-			indexes.reverse();//reverse order of indexes to delete them properly
-			indexes.some(function(i) {//remove cubes
-				state.objects.splice(i,1);
-			});
-			state.objects.forEach((object) => {//shift remaining cubes down
-				vec3.add(object.model.piece_position, object.model.piece_position, vec3.fromValues(0, -1.0, 0));
-				object.current_position = getCubePostition(object.model.cube_position, object.model.piece_position, object.model.rotation);
-			});
-			return true;
-		}
-		indexes = [];
-	});
+	}
 }
 
 function drawScene(gl, state) {

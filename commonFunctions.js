@@ -5,7 +5,7 @@ function setup() {
     var navTag = document.createElement('nav');
     navTag.classList = "navbar navbar-expand-lg navbar-dark bg-dark";
     navTag.innerHTML = `
-    <a class="navbar-brand" href="#">Assignment 7</a>
+    <a class="navbar-brand" href="#">3D Tetris by Anneliese and Andre. Press 'r' to turn off camera rotation. Press 'f' for first person view.</a>
     `;
 
     // Insert the tag into the HMTL document
